@@ -1,0 +1,10 @@
+{
+  "_comment": "Window [SerializeField] fields not in RemeshOptions yet. 'pending' = a feature the web app must still port (milestone in PLAN.md section 3); 'uiOnly' = foldout/section state with no behaviour. A field in neither list, or in 'pending' after it was ported, fails tools/census_window_fields.py.",
+  "pending": [
+    "CombineParts", "HiddenPartsFewer",
+    "BakeTexture", "BakeNormalMap", "TextureSize", "SaveAsAsset", "QuadTopology",
+    "MakeLods", "LodLevels", "LodKeep", "LodPixels", "LodOwnTextures", "LodRemesh", "LodAutoQuads", "LodQuads", "LodSettingsVersion",
+    "PaintMode", "BrushSizePercent", "BrushStrength"
+  ],
+  "uiOnly": ["ShowTypeSettings", "ShowDetails", "OpenModel", "OpenCount", "OpenLoops", "OpenFix", "OpenResult", "OpenLods"]
+}
