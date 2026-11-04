@@ -11,4 +11,7 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <NoWarn>CS1591;CS0108;CS0809</NoWarn>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(ShimFloatMath)'=='true'">
+    <DefineConstants>$(DefineConstants);SHIM_FLOAT_MATH</DefineConstants>
+  </PropertyGroup>
 </Project>

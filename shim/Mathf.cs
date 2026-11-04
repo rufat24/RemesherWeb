@@ -12,14 +12,46 @@ namespace UnityEngine
         public const float Rad2Deg = 1F / Deg2Rad;
         public static readonly float Epsilon = float.Epsilon;
 
+        #if SHIM_FLOAT_MATH
+        public static float Sin(float f) { return MathF.Sin(f); }
+#else
         public static float Sin(float f) => (float)Math.Sin(f);
+#endif
+        #if SHIM_FLOAT_MATH
+        public static float Cos(float f) { return MathF.Cos(f); }
+#else
         public static float Cos(float f) => (float)Math.Cos(f);
+#endif
+        #if SHIM_FLOAT_MATH
+        public static float Tan(float f) { return MathF.Tan(f); }
+#else
         public static float Tan(float f) => (float)Math.Tan(f);
+#endif
+        #if SHIM_FLOAT_MATH
+        public static float Asin(float f) { return MathF.Asin(f); }
+#else
         public static float Asin(float f) => (float)Math.Asin(f);
+#endif
+        #if SHIM_FLOAT_MATH
+        public static float Acos(float f) { return MathF.Acos(f); }
+#else
         public static float Acos(float f) => (float)Math.Acos(f);
+#endif
+        #if SHIM_FLOAT_MATH
+        public static float Atan(float f) { return MathF.Atan(f); }
+#else
         public static float Atan(float f) => (float)Math.Atan(f);
+#endif
+        #if SHIM_FLOAT_MATH
+        public static float Atan2(float y, float x) { return MathF.Atan2(y, x); }
+#else
         public static float Atan2(float y, float x) => (float)Math.Atan2(y, x);
+#endif
+        #if SHIM_FLOAT_MATH
+        public static float Sqrt(float f) { return MathF.Sqrt(f); }
+#else
         public static float Sqrt(float f) => (float)Math.Sqrt(f);
+#endif
         public static float Abs(float f) => Math.Abs(f);
         public static int Abs(int v) => Math.Abs(v);
         public static float Min(float a, float b) => a < b ? a : b;
@@ -46,7 +78,11 @@ namespace UnityEngine
             int n = values.Length; if (n == 0) return 0;
             int m = values[0]; for (int i = 1; i < n; i++) if (values[i] > m) m = values[i]; return m;
         }
+        #if SHIM_FLOAT_MATH
+        public static float Pow(float f, float p) { return MathF.Pow(f, p); }
+#else
         public static float Pow(float f, float p) => (float)Math.Pow(f, p);
+#endif
         public static float Exp(float power) => (float)Math.Exp(power);
         public static float Log(float f, float p) => (float)Math.Log(f, p);
         public static float Log(float f) => (float)Math.Log(f);

@@ -7,9 +7,8 @@ namespace UnityEngine
 
     // Array-backed Mesh. Property getters return COPIES, as Unity's do, so code that writes into a
     // returned array cannot mutate the mesh.
-    public class Mesh
+    public class Mesh : Object
     {
-        public string name = "";
         Vector3[] m_Vertices = new Vector3[0];
         Vector3[] m_Normals = new Vector3[0];
         Vector2[] m_Uv = new Vector2[0];
@@ -70,6 +69,7 @@ namespace UnityEngine
         public void SetIndices(List<int> indices, MeshTopology topology, int submesh) => SetIndices(indices.ToArray(), topology, submesh);
         public int[] GetIndices(int submesh) => (int[])m_Indices[submesh].Clone();
         public MeshTopology GetTopology(int submesh) => m_Topology[submesh];
+        public uint GetIndexCount(int submesh) => (uint)m_Indices[submesh].Length;
         public void RecalculateBounds()
         {
             if (m_Vertices.Length == 0) { m_Bounds = new Bounds(); return; }
