@@ -37,6 +37,10 @@ namespace NativeRemesher.Web
         public bool longCreaseLoops = true;         // m_LongCreaseLoops
         public SymmetryAxis symmetry = SymmetryAxis.None; // m_Symmetry
         public bool materialBorders = false;        // m_MaterialBorders
+        // --- Result (window lines 56-66): the bakes. 0 = Auto size ---
+        public bool bakeTexture = true;             // m_BakeTexture
+        public bool bakeNormalMap = true;           // m_BakeNormalMap
+        public int textureSize = 0;                 // m_TextureSize
 
         public static RemeshOptions FromJson(string json)
         {
