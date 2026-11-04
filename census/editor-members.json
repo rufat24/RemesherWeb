@@ -361,7 +361,7 @@
   "refs": "048df45c2258a7d0"
  },
  "NativeRemesherWindow.TextureSizeFor(IReadOnlyList<TextureBake.Image>images)": {
-  "status": "pending:bake",
+  "status": "ported:WebRemesher.TextureSizeFor",
   "sha": "3d315244395ce838",
   "refs": "ca0ac9e956c470e3"
  },

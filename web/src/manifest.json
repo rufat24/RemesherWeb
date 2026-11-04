@@ -41,9 +41,6 @@
  "pending": [
   "CombineParts",
   "HiddenPartsFewer",
-  "BakeTexture",
-  "BakeNormalMap",
-  "TextureSize",
   "SaveAsAsset",
   "QuadTopology",
   "MakeLods",
@@ -358,6 +355,56 @@
    "label": "On material borders",
    "tooltip": "The borders between the mesh's materials (submeshes) become edge loops, and the result keeps one submesh per material, with the source's materials on it.",
    "group": "common"
+  },
+  {
+   "name": "bakeTexture",
+   "window": "m_BakeTexture",
+   "kind": "bool",
+   "default": true,
+   "label": "Its texture",
+   "tooltip": "Give the result its own UV layout and bake the source's texture into it, with a material using it. The source's own UVs would otherwise be carried over, and on a scan, whose texture atlas is cut into thousands of pieces, about half the quads straddle a cut and show a smeared strip. Reads the texture file at full size.",
+   "group": "common"
+  },
+  {
+   "name": "bakeNormalMap",
+   "window": "m_BakeNormalMap",
+   "kind": "bool",
+   "default": true,
+   "label": "Its surface detail, as a normal map",
+   "tooltip": "Bake the source's surface detail into a tangent-space normal map over the result's own UV layout, with a material using it: what the quads are too coarse to carry -- slots, screws, seams, folds, a tire's tread -- comes back as shading, the way game assets are made. Needs no source texture.",
+   "group": "common"
+  },
+  {
+   "name": "textureSize",
+   "window": "m_TextureSize",
+   "kind": "int",
+   "default": 0,
+   "label": "Size",
+   "tooltip": "Width and height of both baked textures. Auto: the source texture's own size, read from its file (the largest, with several), so an 8K scan bakes at 8K; 4096 when there is no source texture.",
+   "options": [
+    {
+     "value": 0,
+     "label": "Auto"
+    },
+    {
+     "value": 1024,
+     "label": "1024"
+    },
+    {
+     "value": 2048,
+     "label": "2048"
+    },
+    {
+     "value": 4096,
+     "label": "4096"
+    },
+    {
+     "value": 8192,
+     "label": "8192"
+    }
+   ],
+   "group": "common",
+   "disabledWhen": "!bakeTexture && !bakeNormalMap"
   }
  ]
 }

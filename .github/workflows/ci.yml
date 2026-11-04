@@ -43,3 +43,4 @@ jobs:
           e2e/run-formats.sh "$PWD/dist" ../.github/fixtures/cube.obj
           node e2e/fbx-roundtrip.cjs "$PWD/dist" ../.github/fixtures/cube.obj
           node e2e/paint.cjs "$PWD/dist" ../.github/fixtures/sphere5k.obj
+          node e2e/bake.cjs "$PWD/dist" ../.github/fixtures/sphere5k.obj

@@ -5,6 +5,8 @@ export interface SourceMesh {
   uvs?: Float32Array;                 // 2 per vertex, index-parallel to positions (unwelded at seams)
   triangleMaterials?: Int32Array;     // per triangle
   materialNames?: string[];
+  /** Textures the file itself carried (glTF/FBX), one entry per material slot; the UI lets the user add or replace them. */
+  embedded?: { color: ({ width: number; height: number; rgba: Uint8ClampedArray; name: string } | null)[]; normal: ({ width: number; height: number; rgba: Uint8ClampedArray; name: string } | null)[] };
 }
 
 /** What the core returns: polygons (3, 4 or more corners). */
@@ -15,6 +17,9 @@ export interface QuadMesh {
   uvs?: Float32Array;
   faceMaterials?: Int32Array;
   materialNames?: string[];
+  cornerUvs?: Float32Array;           // 2 per face corner (after a bake the result has a NEW atlas; uvs above are then absent)
+  texture?: { size: number; rgba: Uint8Array };     // baked colour, row 0 at the BOTTOM (Unity order)
+  normalMap?: { size: number; rgba: Uint8Array };
   fbx?: Uint8Array;                   // FBX bytes written by the core's own FbxWriter (upstream code), when the job produced them
 }
 

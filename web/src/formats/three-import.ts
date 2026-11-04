@@ -4,20 +4,38 @@ import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import type { SourceMesh } from './mesh';
+import type { TexImage } from './textures';
+
+function imageToTex(tex: THREE.Texture | null | undefined, name: string): TexImage | null {
+  const img = tex?.image as (CanvasImageSource & { width: number; height: number }) | undefined;
+  if (!img || !(img.width > 0) || !(img.height > 0)) return null;
+  const c = new OffscreenCanvas(img.width, img.height); const g = c.getContext('2d', { willReadFrequently: true })!;
+  g.drawImage(img, 0, 0); const d = g.getImageData(0, 0, img.width, img.height);
+  return { width: d.width, height: d.height, rgba: d.data, name };
+}
 
 /** Bakes world transforms and merges every mesh of a scene into one SourceMesh (file space, right-handed). */
 export function sceneToSource(root: THREE.Object3D): SourceMesh {
   root.updateMatrixWorld(true);
   const pos: number[] = [], uv: number[] = [], tri: number[] = [], mat: number[] = [];
   const names: string[] = []; let anyUv = false; let base = 0;
+  const color: (TexImage | null)[] = [], normal: (TexImage | null)[] = []; const seen = new Map<THREE.Texture, TexImage | null>();
+  const read = (t: THREE.Texture | null | undefined, name: string) => { if (!t) return null; if (!seen.has(t)) seen.set(t, imageToTex(t, name)); return seen.get(t)!; };
   root.traverse((o) => {
     const mesh = o as THREE.Mesh; if (!mesh.isMesh || !mesh.geometry) return;
     const g = mesh.geometry as THREE.BufferGeometry; const p = g.getAttribute('position'); if (!p) return;
     const uvA = g.getAttribute('uv'); const v = new THREE.Vector3();
-    for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p as THREE.BufferAttribute, i).applyMatrix4(mesh.matrixWorld); pos.push(v.x, v.y, v.z); if (uvA) { uv.push(uvA.getX(i), uvA.getY(i)); anyUv = true; } else uv.push(0, 0); }
+    const firstMat = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material) as THREE.MeshStandardMaterial;
+    // glTF textures are not flipped (v = 0 is the TOP row); the core and OBJ/FBX have v = 0 at the bottom
+    const flipV = firstMat?.map?.flipY === false || firstMat?.normalMap?.flipY === false;
+    for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p as THREE.BufferAttribute, i).applyMatrix4(mesh.matrixWorld); pos.push(v.x, v.y, v.z); if (uvA) { uv.push(uvA.getX(i), flipV ? 1 - uvA.getY(i) : uvA.getY(i)); anyUv = true; } else uv.push(0, 0); }
     const idx = g.getIndex(); const n = idx ? idx.count : p.count;
     const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-    const slotOf = (m: THREE.Material) => { const nm = m.name || 'material' + names.length; let i = names.indexOf(nm); if (i < 0) { names.push(nm); i = names.length - 1; } return i; };
+    const slotOf = (m: THREE.Material) => {
+      const nm = m.name || 'material' + names.length; let i = names.indexOf(nm);
+      if (i < 0) { names.push(nm); i = names.length - 1; const sm = m as THREE.MeshStandardMaterial; color[i] = read(sm.map, nm + '_color'); normal[i] = read(sm.normalMap, nm + '_normal'); }
+      return i;
+    };
     const groups = g.groups.length ? g.groups : [{ start: 0, count: n, materialIndex: 0 }];
     for (const grp of groups) {
       const slot = slotOf(mats[Math.min(grp.materialIndex ?? 0, mats.length - 1)]);
@@ -31,6 +49,7 @@ export function sceneToSource(root: THREE.Object3D): SourceMesh {
   const out: SourceMesh = { positions: Float32Array.from(pos), triangles: Int32Array.from(tri) };
   if (anyUv) out.uvs = Float32Array.from(uv);
   if (names.length) { out.triangleMaterials = Int32Array.from(mat); out.materialNames = names; }
+  if (color.some(Boolean) || normal.some(Boolean)) out.embedded = { color, normal };
   return out;
 }
 

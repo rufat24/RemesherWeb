@@ -1,5 +1,6 @@
 import manifest from './manifest.json';
-import { EXPORT_FORMATS, IMPORT_EXTENSIONS, exportMesh, importFile, type ExportFormat } from './formats';
+import { EXPORT_FORMATS, IMPORT_EXTENSIONS, exportMesh, importFiles, type ExportFormat } from './formats';
+import { bakeSet, decodeImage, slotCount, toWorkerBake, type TexImage } from './formats/textures';
 import { quadMeshFromUnity, sourceToUnity } from './formats/unity-space';
 import type { QuadMesh, SourceMesh } from './formats/mesh';
 import { startRemesh, type RemeshJob, type RemeshSummary } from './remesh-client';
@@ -13,6 +14,7 @@ const opts: Record<string, string | number | boolean> = Object.fromEntries(field
 const panel = document.getElementById('panel')!;
 const viewer = new Viewer(document.getElementById('view')!);
 const paint = new PaintState(); let painting = false;
+let slots: { color: (TexImage | null)[]; normal: (TexImage | null)[] } = { color: [], normal: [] };
 let source: SourceMesh | null = null, sourceName = 'model', result: QuadMesh | null = null, job: RemeshJob | null = null;
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, props: Partial<HTMLElementTagNameMap[K]> & { class?: string } = {}, ...kids: (Node | string)[]) => {
@@ -24,8 +26,8 @@ const visible = (f: Field) => f.group === 'common' || opts.modelType === 'Auto' 
 
 // ---- panel skeleton
 const status = el('div', { class: 'note' }); const bar = el('progress', { max: 1, value: 0, hidden: true });
-const fileInput = el('input', { type: 'file', hidden: true, accept: IMPORT_EXTENSIONS.map((e) => '.' + e).join(',') });
-const drop = el('div', { id: 'drop' }, 'Drop a model here or click to choose', el('div', { class: 'note' }, 'OBJ, GLB/GLTF, STL, PLY, FBX'));
+const fileInput = el('input', { type: 'file', multiple: true, hidden: true, accept: [...IMPORT_EXTENSIONS, 'mtl', 'png', 'jpg', 'jpeg', 'webp'].map((e) => '.' + e).join(',') });
+const drop = el('div', { id: 'drop' }, 'Drop a model here or click to choose', el('div', { class: 'note' }, 'OBJ (+ MTL and textures), GLB/GLTF, STL, PLY, FBX'));
 const runBtn = el('button', { class: 'primary', textContent: 'Remesh', disabled: true }); const cancelBtn = el('button', { textContent: 'Cancel', hidden: true });
 const results = el('div'); const settings = el('div');
 const exportSel = el('select'); EXPORT_FORMATS.forEach((f) => exportSel.append(el('option', { value: f.id, textContent: f.label })));
@@ -50,6 +52,25 @@ function renderSettings() {
   settings.append(sec(2)); for (const n of ['targetQuadCount', 'curvesAddQuads', 'curveDetail']) settings.append(control(fields.find((f) => f.name === n)!));
   settings.append(sec(3)); for (const n of ['longCreaseLoops', 'materialBorders', 'symmetry']) settings.append(control(fields.find((f) => f.name === n)!));
   settings.append(sec(4), paintPanel());
+  settings.append(sec(5), el('div', { class: 'note', textContent: 'Bake from the source' }));
+  for (const n of ['bakeTexture', 'bakeNormalMap', 'textureSize']) settings.append(control(fields.find((f) => f.name === n)!));
+  settings.append(texturePanel());
+}
+
+function texturePanel(): HTMLElement {
+  const box = el('div'); if (!source) return box;
+  const names = source.materialNames ?? ['(the mesh)'];
+  for (let i = 0; i < slotCount(source); i++) {
+    const row = el('div', { class: 'row' }); row.style.flexWrap = 'wrap'; row.append(el('span', { class: 'note', textContent: names[i] ?? 'material ' + i }));
+    for (const kind of ['color', 'normal'] as const) {
+      const inp = el('input', { type: 'file', accept: 'image/*', hidden: true }); inp.onchange = async () => { const f = inp.files?.[0]; if (!f) return; slots[kind][i] = await decodeImage(f, f.name); renderSettings(); };
+      const cur = slots[kind][i]; const b = el('button', { textContent: (kind === 'color' ? 'texture: ' : 'normal map: ') + (cur ? `${cur.name} ${cur.width}x${cur.height}` : 'none'), onclick: () => inp.click() }); b.style.fontSize = '11px';
+      row.append(b, inp);
+    }
+    box.append(row);
+  }
+  if (!source.uvs) box.append(el('div', { class: 'note', textContent: 'This model has no UVs: no source texture can be baked; the normal map still can.' }));
+  return box;
 }
 
 const P = manifest.paint;
@@ -89,9 +110,9 @@ function control(f: Field): HTMLElement {
     const cb = el('input', { type: 'checkbox', checked: opts[f.name] as boolean, disabled: off, onchange: () => { opts[f.name] = cb.checked; renderSettings(); } });
     return el('label', { class: 'row' + (off ? ' off' : ''), title: tip }, cb, f.label ?? f.name);
   }
-  if (f.kind === 'enum' && f.options) {
+  if ((f.kind === 'enum' || f.kind === 'int') && f.options) {
     const seg = el('div', { class: 'seg' }); f.options.forEach((o) => seg.append(el('button', { textContent: o.label, className: opts[f.name] === o.value ? 'on' : '', onclick: () => { opts[f.name] = o.value; renderSettings(); } })));
-    return el('div', { title: tip }, el('div', { class: 'note', textContent: f.label ?? f.name }), seg);
+    const wrap = el('div', { title: tip, class: off ? 'off' : '' }, el('div', { class: 'note', textContent: f.label ?? f.name }), seg); wrap.querySelectorAll('button').forEach((b) => ((b as HTMLButtonElement).disabled = off)); return wrap;
   }
   const input = el('input', { type: f.name === 'curveDetail' ? 'range' : 'number', value: String(opts[f.name]), min: String(f.min ?? 0), step: String(f.step ?? 1) });
   if (f.max !== undefined) input.max = String(f.max);
@@ -102,20 +123,21 @@ function control(f: Field): HTMLElement {
 renderSettings();
 
 // ---- import
-async function load(file: File) {
-  status.className = 'note'; status.textContent = `Reading ${file.name}…`;
+async function load(files: File[]) {
+  const label = files.map((f) => f.name).join(', '); status.className = 'note'; status.textContent = `Reading ${label}…`;
   try {
-    const unity = await importFile(file.name, await file.arrayBuffer());
-    source = unity; sourceName = file.name.replace(/\.[^.]+$/, ''); result = null; exportBtn.disabled = true; results.replaceChildren();
+    const imp = await importFiles(files); const unity = imp.mesh;
+    source = unity; sourceName = imp.name; result = null; exportBtn.disabled = true; results.replaceChildren();
+    slots = { color: [...(unity.embedded?.color ?? [])], normal: [...(unity.embedded?.normal ?? [])] };
     const fileSpace = sourceToUnity(unity);           // sourceToUnity is its own inverse: back to file space for display
     viewer.setSource(fileSpace); paint.setSource(fileSpace.positions); painting = false; viewer.navigation = true; renderSettings();
-    status.textContent = `${file.name}: ${(unity.positions.length / 3).toLocaleString()} vertices, ${(unity.triangles.length / 3).toLocaleString()} triangles`;
+    status.textContent = `${imp.name}: ${(unity.positions.length / 3).toLocaleString()} vertices, ${(unity.triangles.length / 3).toLocaleString()} triangles` + (unity.uvs ? ', UVs' : ', no UVs');
     runBtn.disabled = false;
-  } catch (e) { status.className = 'err'; status.textContent = `Could not read ${file.name}: ${(e as Error).message}`; }
+  } catch (e) { status.className = 'err'; status.textContent = `Could not read ${label}: ${(e as Error).message}`; }
 }
-drop.onclick = () => fileInput.click(); fileInput.onchange = () => fileInput.files?.[0] && load(fileInput.files[0]);
+drop.onclick = () => fileInput.click(); fileInput.onchange = () => fileInput.files?.length && load([...fileInput.files]);
 drop.ondragover = (e) => { e.preventDefault(); drop.classList.add('over'); }; drop.ondragleave = () => drop.classList.remove('over');
-drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove('over'); const f = e.dataTransfer?.files?.[0]; if (f) load(f); };
+drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove('over'); const f = e.dataTransfer?.files; if (f?.length) load([...f]); };
 
 // ---- run
 function showSummary(s: RemeshSummary, bootMs: number, wallMs: number) {
@@ -123,12 +145,24 @@ function showSummary(s: RemeshSummary, bootMs: number, wallMs: number) {
     ['Vertices', s.verts.toLocaleString()], ['Solve', (s.totalMs / 1000).toFixed(1) + ' s'], ['Total', (wallMs / 1000).toFixed(1) + ' s (boot ' + bootMs + ' ms)'], ['Result hash', s.hash]];
   const kv = el('div', { class: 'kv' }); rows.forEach(([k, v]) => kv.append(el('b', { textContent: k }), el('span', { textContent: v })));
   results.replaceChildren(el('h2', {}, manifest.sections.find((x) => x.n === 5)!.title), kv);
+  if (s.bakeNote) results.append(el('div', { class: 'note', textContent: s.bakeNote }));
+  for (const [label, m] of [['Baked texture', result?.texture], ['Baked normal map', result?.normalMap]] as const) if (m) results.append(thumb(label, m));
+}
+function bakeInputs() {
+  if (!source || !source.uvs) return undefined;     // RunSingle reads textures only when the source has UVs
+  const color = opts.bakeTexture ? bakeSet(source, slots.color) : null, detail = opts.bakeNormalMap ? bakeSet(source, slots.normal) : null;
+  return color || detail ? { color: color ? toWorkerBake(color) : undefined, detail: detail ? toWorkerBake(detail) : undefined } : undefined;
+}
+function thumb(label: string, m: { size: number; rgba: Uint8Array }): HTMLElement {
+  const t = 160, c = document.createElement('canvas'); c.width = c.height = t; const g = c.getContext('2d')!; const small = new ImageData(t, t); const step = m.size / t;
+  for (let y = 0; y < t; y++) for (let x = 0; x < t; x++) { const sx = Math.floor(x * step), sy = Math.floor((t - 1 - y) * step); const si = 4 * (sy * m.size + sx), di = 4 * (y * t + x); small.data.set(m.rgba.subarray(si, si + 4), di); }
+  g.putImageData(small, 0, 0); c.style.cssText = 'width:100%;max-width:160px;border:1px solid var(--line);border-radius:6px;margin:4px 6px 0 0'; return el('div', { class: 'note', title: `${m.size} x ${m.size}` }, label + ` ${m.size}px`, el('br'), c);
 }
 runBtn.onclick = async () => {
   if (!source) return;
   runBtn.hidden = true; cancelBtn.hidden = false; bar.hidden = false; bar.value = 0; status.className = 'note'; status.textContent = 'Starting…';
   const t0 = performance.now(); const o = Object.fromEntries(fields.map((f) => [f.name, opts[f.name]]));
-  job = startRemesh(source, o, (stage, fraction) => { bar.value = fraction; status.textContent = stage; }, sourceName + '_remeshed', paint.toArray());
+  job = startRemesh(source, o, (stage, fraction) => { bar.value = fraction; status.textContent = stage; }, sourceName + '_remeshed', paint.toArray(), bakeInputs());
   try {
     const out = await job.promise; result = out.mesh; viewer.setResult(quadMeshFromUnity(out.mesh)); exportBtn.disabled = false; (document.getElementById('vsrc') as HTMLInputElement).checked = false;
     status.textContent = 'Done.'; showSummary(out.summary, out.bootMs, performance.now() - t0);
@@ -139,7 +173,8 @@ cancelBtn.onclick = () => job?.cancel();
 
 exportBtn.onclick = () => {
   if (!result) return; const fmt = exportSel.value as ExportFormat;
-  const blob = exportMesh(result, fmt, sourceName + '_remeshed'); const a = el('a', { href: URL.createObjectURL(blob), download: `${sourceName}_remeshed.${fmt}` }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  exportMesh(result, fmt, sourceName + '_remeshed').then(({ blob, filename }) => { const a = el('a', { href: URL.createObjectURL(blob), download: filename }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); })
+    .catch((e) => { status.className = 'err'; status.textContent = 'Export failed: ' + (e as Error).message; });
 };
 (document.getElementById('vsrc') as HTMLInputElement).onchange = (e) => viewer.showSource((e.target as HTMLInputElement).checked);
 (document.getElementById('vres') as HTMLInputElement).onchange = (e) => viewer.showResult((e.target as HTMLInputElement).checked);

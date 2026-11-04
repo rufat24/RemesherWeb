@@ -39,7 +39,11 @@ for m in re.finditer(r'public\s+([\w.]+)\s+(\w+)\s*=\s*([^;]+);[ \t]*(?://[ \t]*
 
 sym = re.search(r'Toolbar\(\(int\)m_Symmetry,\s*new\[\]\s*\{([^}]*)\}', src)
 sym_labels = re.findall(r'"([^"]*)"', sym.group(1)) if sym else []
+tsz = re.search(r'm_TextureSize,\s*new\[\]\s*\{([^}]*)\},\s*new\[\]\s*\{([^}]*)\}', src)
+bake_sub = re.search(r'LabelField\("(Bake from the source)"', src)
 for f in fields:
+    if f['name'] == 'textureSize' and tsz:
+        f['options'] = [{'value': int(v), 'label': l} for v, l in zip(tsz.group(2).split(','), re.findall(r'GUIContent\("([^"]*)"\)', tsz.group(1)))]
     if f['name'] == 'symmetry': f['options'] = [{'value': v, 'label': l} for v, l in zip(['None', 'X', 'Y', 'Z'], sym_labels)]
 for f in fields:                       # group: which model type's section shows it
     n = f['name']
@@ -47,8 +51,8 @@ for f in fields:                       # group: which model type's section shows
 rng = {'targetQuadCount': {'min': 4, 'step': 100}, 'curveDetail': {'min': 0, 'max': 100}}   # from IntField Mathf.Max(4, ..) and Slider(.., 0f, 100f)
 for f in fields: f.update(rng.get(f['name'], {}))
 # DisabledScope conditions in the window, verified present below, mapped onto fields
-disabled = {'hardMergeFlat': 'hardEvenRows', 'hardPlateRows': '!hardMergeFlat || hardEvenRows', 'hardRowsAtMerged': '!hardMergeFlat || hardEvenRows', 'hardToCount': '!hardMergeFlat || hardEvenRows'}
-needed = ['DisabledScope(m_HardEvenRows)', 'DisabledScope(!m_HardMergeFlat || m_HardEvenRows)']
+disabled = {'textureSize': '!bakeTexture && !bakeNormalMap', 'hardMergeFlat': 'hardEvenRows', 'hardPlateRows': '!hardMergeFlat || hardEvenRows', 'hardRowsAtMerged': '!hardMergeFlat || hardEvenRows', 'hardToCount': '!hardMergeFlat || hardEvenRows'}
+needed = ['DisabledScope(m_HardEvenRows)', 'DisabledScope(!m_HardMergeFlat || m_HardEvenRows)', 'DisabledScope(!m_BakeTexture && !m_BakeNormalMap)']
 for f in fields:
     if f['name'] in disabled: f['disabledWhen'] = disabled[f['name']]
 

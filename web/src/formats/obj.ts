@@ -46,19 +46,33 @@ export function parseObj(text: string): SourceMesh {
   return out;
 }
 
-/** QuadMesh -> OBJ, keeping quads and n-gons. Shortest round-trip float text ("R" formatting equivalent). */
-export function writeObj(m: QuadMesh, name = 'remeshed'): string {
+/**
+ * QuadMesh -> OBJ, keeping quads and n-gons. UVs: after a bake the result has per-CORNER UVs (the new atlas), written as `vt` per corner;
+ * otherwise per-vertex UVs. `mtllib` is written when a material file goes with it (textures baked).
+ */
+export function writeObj(m: QuadMesh, name = 'remeshed', mtl?: { file: string; material: string }): string {
   const L: string[] = ['# NativeRemesher web export', 'o ' + name];
-  const n = m.positions.length / 3; const hasUv = !!m.uvs && m.uvs.length === 2 * n;
+  if (mtl) L.push('mtllib ' + mtl.file);
+  const n = m.positions.length / 3; const corners = m.faceIndices.length;
+  const perCorner = !!m.cornerUvs && m.cornerUvs.length === 2 * corners; const perVertex = !perCorner && !!m.uvs && m.uvs.length === 2 * n;
   for (let i = 0; i < n; i++) L.push('v ' + m.positions[3 * i] + ' ' + m.positions[3 * i + 1] + ' ' + m.positions[3 * i + 2]);
-  if (hasUv) for (let i = 0; i < n; i++) L.push('vt ' + m.uvs![2 * i] + ' ' + m.uvs![2 * i + 1]);
+  if (perCorner) for (let c = 0; c < corners; c++) L.push('vt ' + m.cornerUvs![2 * c] + ' ' + m.cornerUvs![2 * c + 1]);
+  else if (perVertex) for (let i = 0; i < n; i++) L.push('vt ' + m.uvs![2 * i] + ' ' + m.uvs![2 * i + 1]);
+  if (mtl) L.push('usemtl ' + mtl.material);
   let o = 0, lastMat = -2;
   for (let f = 0; f < m.faceSizes.length; f++) {
     const s = m.faceSizes[f];
-    if (m.faceMaterials && m.faceMaterials[f] !== lastMat) { lastMat = m.faceMaterials[f]; L.push('usemtl ' + (m.materialNames?.[lastMat] ?? 'material' + lastMat)); }
+    if (!mtl && m.faceMaterials && m.faceMaterials[f] !== lastMat) { lastMat = m.faceMaterials[f]; L.push('usemtl ' + (m.materialNames?.[lastMat] ?? 'material' + lastMat)); }
     let line = 'f';
-    for (let k = 0; k < s; k++) { const i = m.faceIndices[o + k] + 1; line += hasUv ? ' ' + i + '/' + i : ' ' + i; }
+    for (let k = 0; k < s; k++) { const i = m.faceIndices[o + k] + 1; line += perCorner ? ' ' + i + '/' + (o + k + 1) : perVertex ? ' ' + i + '/' + i : ' ' + i; }
     L.push(line); o += s;
   }
+  return L.join('\n') + '\n';
+}
+
+/** A minimal MTL for baked maps: map_Kd colour, map_Bump normal map (tangent space). */
+export function writeMtl(material: string, colorFile?: string, normalFile?: string): string {
+  const L = ['# NativeRemesher web export', 'newmtl ' + material, 'Ka 1 1 1', 'Kd 1 1 1', 'Ks 0 0 0', 'illum 1'];
+  if (colorFile) L.push('map_Kd ' + colorFile); if (normalFile) L.push('map_Bump ' + normalFile);
   return L.join('\n') + '\n';
 }
