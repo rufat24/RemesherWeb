@@ -45,7 +45,7 @@ namespace NativeRemesher.Host
             foreach (var p in ex.positions) { mix((uint)BitConverter.SingleToInt32Bits(p.x)); mix((uint)BitConverter.SingleToInt32Bits(p.y)); mix((uint)BitConverter.SingleToInt32Bits(p.z)); }
             foreach (var f in ex.faces) { mix((uint)f.Length); foreach (var i in f) mix((uint)i); }
             return "{\"case\":\"" + name + "\",\"target\":" + target + ",\"outFaces\":" + ex.faces.Count + ",\"outVerts\":" + ex.positions.Length +
-                   ",\"hash\":\"" + h.ToString("x16") + "\",\"ms\":" + sw.ElapsedMilliseconds + "}";
+                   ",\"hash\":\"" + h.ToString("x16") + "\",\"ms\":" + sw.ElapsedMilliseconds + ",\"decimateMs\":" + result.decimateMs + ",\"hierarchyMs\":" + result.hierarchyMs + ",\"attributeMs\":" + result.attributeMs + ",\"topologyMs\":" + result.topologyMs.ToString("F0") + ",\"orientationMs\":" + result.orientationMs.ToString("F0") + ",\"positionMs\":" + result.positionMs.ToString("F0") + ",\"extractionMs\":" + result.extractionMs.ToString("F0") + ",\"totalMs\":" + result.totalMs.ToString("F0") + "}";
         }
     }
 }

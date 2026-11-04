@@ -15,63 +15,77 @@ namespace UnityEngine
         #if SHIM_FLOAT_MATH
         public static float Sin(float f) { return MathF.Sin(f); }
 #else
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Sin(float f) => (float)Math.Sin(f);
 #endif
         #if SHIM_FLOAT_MATH
         public static float Cos(float f) { return MathF.Cos(f); }
 #else
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Cos(float f) => (float)Math.Cos(f);
 #endif
         #if SHIM_FLOAT_MATH
         public static float Tan(float f) { return MathF.Tan(f); }
 #else
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Tan(float f) => (float)Math.Tan(f);
 #endif
         #if SHIM_FLOAT_MATH
         public static float Asin(float f) { return MathF.Asin(f); }
 #else
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Asin(float f) => (float)Math.Asin(f);
 #endif
         #if SHIM_FLOAT_MATH
         public static float Acos(float f) { return MathF.Acos(f); }
 #else
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Acos(float f) => (float)Math.Acos(f);
 #endif
         #if SHIM_FLOAT_MATH
         public static float Atan(float f) { return MathF.Atan(f); }
 #else
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Atan(float f) => (float)Math.Atan(f);
 #endif
         #if SHIM_FLOAT_MATH
         public static float Atan2(float y, float x) { return MathF.Atan2(y, x); }
 #else
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Atan2(float y, float x) => (float)Math.Atan2(y, x);
 #endif
         #if SHIM_FLOAT_MATH
         public static float Sqrt(float f) { return MathF.Sqrt(f); }
 #else
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Sqrt(float f) => (float)Math.Sqrt(f);
 #endif
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Abs(float f) => Math.Abs(f);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static int Abs(int v) => Math.Abs(v);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Min(float a, float b) => a < b ? a : b;
         public static float Min(params float[] values)
         {
             int n = values.Length; if (n == 0) return 0F;
             float m = values[0]; for (int i = 1; i < n; i++) if (values[i] < m) m = values[i]; return m;
         }
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static int Min(int a, int b) => a < b ? a : b;
         public static int Min(params int[] values)
         {
             int n = values.Length; if (n == 0) return 0;
             int m = values[0]; for (int i = 1; i < n; i++) if (values[i] < m) m = values[i]; return m;
         }
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Max(float a, float b) => a > b ? a : b;
         public static float Max(params float[] values)
         {
             int n = values.Length; if (n == 0) return 0F;
             float m = values[0]; for (int i = 1; i < n; i++) if (values[i] > m) m = values[i]; return m;
         }
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static int Max(int a, int b) => a > b ? a : b;
         public static int Max(params int[] values)
         {
@@ -81,18 +95,30 @@ namespace UnityEngine
         #if SHIM_FLOAT_MATH
         public static float Pow(float f, float p) { return MathF.Pow(f, p); }
 #else
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Pow(float f, float p) => (float)Math.Pow(f, p);
 #endif
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Exp(float power) => (float)Math.Exp(power);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Log(float f, float p) => (float)Math.Log(f, p);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Log(float f) => (float)Math.Log(f);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Log10(float f) => (float)Math.Log10(f);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Ceil(float f) => (float)Math.Ceiling(f);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Floor(float f) => (float)Math.Floor(f);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Round(float f) => (float)Math.Round(f);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static int CeilToInt(float f) => (int)Math.Ceiling(f);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static int FloorToInt(float f) => (int)Math.Floor(f);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static int RoundToInt(float f) => (int)Math.Round(f);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Sign(float f) => f >= 0F ? 1F : -1F;
         public static float Clamp(float value, float min, float max)
         {
@@ -102,8 +128,11 @@ namespace UnityEngine
         {
             if (value < min) value = min; else if (value > max) value = max; return value;
         }
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Clamp01(float value) => value < 0F ? 0F : value > 1F ? 1F : value;
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Lerp(float a, float b, float t) => a + (b - a) * Clamp01(t);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float LerpUnclamped(float a, float b, float t) => a + (b - a) * t;
         public static float LerpAngle(float a, float b, float t)
         {
@@ -114,6 +143,7 @@ namespace UnityEngine
             if (Abs(target - current) <= maxDelta) return target;
             return current + Sign(target - current) * maxDelta;
         }
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float Repeat(float t, float length) => Clamp(t - Floor(t / length) * length, 0F, length);
         public static float PingPong(float t, float length)
         {
@@ -131,6 +161,7 @@ namespace UnityEngine
         }
         public static bool Approximately(float a, float b)
             => Abs(b - a) < Max(1E-06f * Max(Abs(a), Abs(b)), Epsilon * 8F);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static bool IsPowerOfTwo(int value) => (value & (value - 1)) == 0;
         public static int NextPowerOfTwo(int value)
         {

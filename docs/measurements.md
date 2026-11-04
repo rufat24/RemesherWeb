@@ -47,15 +47,34 @@ Output hash = FNV-1a over every output vertex coordinate bit pattern and every f
   was not compiled with 'atomics' or 'bulk-memory' features` (.NET 10.0.14, Emscripten 3.1.56). Threaded interpreter would be pointless (~75x slower).
   Possible follow-up: AOT atomics flags, or a later .NET.
 
-## G0 (go/no-go) per the plan's thresholds
+## Root cause of the 7x and the fix (profiled, not guessed)
+
+Per-stage AOT vs CoreCLR-inline on `icosphere_80k@2000` before the fix: decimate 0.9x, orientation 3.3x, **position 12.3x** (29.7 s of 33.6 s), extraction 1.7x.
+Hypotheses tested and **refuted**: (1) Mono interpreter fallback for `Array.Sort<int>` (`MONO_LOG_MASK=aot` listed 20 fallbacks; replacing the hot
+`SparseLdlt` sort changed position 29.7 s -> 29.0 s); (2) garbage collection (`MONO_GC_PARAMS=nursery-size=64m/256m`: same time).
+A V8 CPU profile of a build that keeps the wasm name section (`-p:WasmNativeStrip=false`) showed: **44% self time in `PositionField.Compat(Vector3 x8...)` plus
+~20% in `UnityShim.Vector3.op_Multiply/op_Addition/Dot/sqrMagnitude` calls that were not inlined.** Mono AOT does not inline across assembly boundaries and the
+shim lived in `UnityShim.dll`.
+
+**Fix (only our own code, `upstream/` untouched):** compile the upstream Runtime, the shim and the host into **one assembly** for the WebAssembly build
+(`wasm/NativeRemesher.Wasm.csproj`), and mark the shim's Vector2/Vector3/Mathf members `AggressiveInlining`.
+
+| Case | AOT before | **AOT after** | CoreCLR inline | CoreCLR threaded | after / inline | hash = CoreCLR |
+|---|---|---|---|---|---|---|
+| cube_subdivided @2000 | 22.4 s | **3.4 s** | 3.0 s | 2.6 s | 1.14x | yes |
+| icosphere_80k @2000 | 38.9 s | **6.8 s** (Chromium Worker 6.9 s) | 5.3 s | 3.6 s | 1.3x | yes |
+| icosphere_320k @8000 | 175.6 s | **45.9 s** | 25.0 s | 12.7 s | 1.84x | yes |
+
+Position stage on 80k: 29.0 s -> 4.0 s. Memory RSS (Node): 198 / 226 / 570 MB. Brotli total of `_framework` 5.9 MB in this symbol-keeping build (stripped production build to be measured).
+
+## G0 (go/no-go) per the plan's thresholds — re-evaluated after the fix
 
 | Threshold | Measured | Verdict |
 |---|---|---|
-| WASM AOT <= 5x slower than CoreCLR-inline | **7.0-7.5x** | **Miss** |
-| `icosphere_320k@8000` <= 3 min | **2 min 56 s** | Barely met |
-| Threads available | Not buildable (E6) | Closed for now |
+| WASM AOT <= 5x slower than CoreCLR-inline | **1.14x - 1.84x** | **Met** |
+| `icosphere_320k@8000` <= 3 min | **46 s** | **Met** |
+| Threads available | not buildable (E6) | not needed for these cases |
 
-**Decision: hybrid.** The browser runs small and medium inputs (comfortably: a few thousand quads on up to ~100k triangles takes well under a minute).
-Heavy jobs (very large scans, big quad targets, texture bakes) need the server host, which is the same `Core` library on CoreCLR with real threads
-(12.7 s instead of 176 s for the heaviest corpus case). The server is therefore no longer a contingency but a planned component; this is the
-substance of user decision D3 (and of the IP question D4). Re-measure after any .NET upgrade, since both AOT speed and threaded AOT are moving targets.
+**Decision: browser-only is viable and is the plan.** The first G0 verdict ("hybrid", from the 7x figure) was an artefact of cross-assembly inlining and was
+withdrawn after profiling. A server host stays an *option* (very large scans, texture bakes at 8K, IP concerns: decisions D3/D4), no longer a requirement.
+Still unmeasured: the heavy features (bakes, Parts, LOD chains) and 1M-triangle inputs; E5 (4K/8K bake memory) and E7 (scan-size ceiling) come next.

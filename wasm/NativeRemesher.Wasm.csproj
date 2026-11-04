@@ -9,12 +9,15 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <OutputType>Exe</OutputType>
     <InvariantGlobalization>true</InvariantGlobalization>
+    <RunAOTCompilation Condition="'$(Configuration)'=='Release'">true</RunAOTCompilation>
     <TrimMode>partial</TrimMode>
     <NoWarn>CS1591;CS0108;CS0809;CS0618;CS0649;CS0169;CS0219;CS0414;CS8981;CS1587;CS1573;CS1572;CS1574;CS0067;IL2026;IL3050</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../core/NativeRemesher.Core.csproj" />
-    <ProjectReference Include="../shim/UnityShim.csproj" />
+    <!-- ONE assembly: upstream Runtime + shim + host. Mono AOT does not inline across assembly boundaries, and the shim's Vector3
+         operators sit under every inner loop (profile: 44% in PositionField.Compat plus ~20% in non-inlined Vector3 calls). -->
+    <Compile Include="../upstream/Runtime/**/*.cs" Exclude="../upstream/Runtime/RemeshPaint.cs;../upstream/Runtime/RemeshSource.cs" />
+    <Compile Include="../shim/*.cs" />
     <!-- Corpus builders (MeshCorpus etc.) come from upstream/Benchmark, compiled unchanged. -->
     <Compile Include="../upstream/Benchmark/MeshCorpus.cs;../upstream/Benchmark/MeshMetrics.cs;../upstream/Benchmark/PolyMesh.cs;../upstream/Benchmark/BenchmarkReport.cs;../upstream/Benchmark/FieldDiagnostics.cs;../upstream/Benchmark/IntegerGridAudit.cs;../upstream/Benchmark/ObjReader.cs;../upstream/Benchmark/ObjWriter.cs" />
   </ItemGroup>
