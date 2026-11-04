@@ -72,7 +72,7 @@ is a small addition, not a rewrite. M4 decides, from measurements, whether it sh
 
 ## 4. Milestones (each has an exit check)
 
-**M0 — Core compiles outside Unity (Linux, .NET 8).**
+**M0 — Core compiles outside Unity (Linux, .NET 10).**
 1. **Get the shim list from the compiler, not grep.** Compile `Runtime/` against an empty `UnityEngine`
    namespace and collect the CS0246 / CS0103 errors; that list is the exact shim needed. (grep already shows
    attributes `[Tooltip]`, `[Serializable]`, `[NonSerialized]`, and that `RemeshProfile` is a plain struct, but
@@ -194,7 +194,7 @@ Blender `.blend`, …) need a converter and are out unless you name them. Large 
 ceiling as the remesher (M5). Each format gets a round-trip test (import → export → re-import, counts and bounds equal,
 quads preserved where the format allows).
 
-## 6. Open items (unverified — do not assume)
+## 8. Open items (unverified — do not assume)
 
 1. **License.** Not checked: the repo has no LICENSE file, and the algorithm derives from Instant Meshes and
    QuadriFlow. Resolve before the site goes public.
@@ -204,7 +204,7 @@ quads preserved where the format allows).
 4. **Static mutable knobs** leak between runs unless the facade snapshots and restores them (M0, tested in M1).
 5. **Tier-2 corpus** (real scans) is not in the repo, so real-world parity is limited to what you can supply.
 
-## 7. Repo layout
+## 9. Repo layout
 
 ```
 sync/    copies Runtime/ (+ needed Benchmark files) from RemesherDektop@UPSTREAM_SHA; read-only
