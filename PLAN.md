@@ -133,6 +133,11 @@ short feature spec with a parity checklist, then is built, then gated by a parit
 | 3f FBX, materials, textures round-trip | `FbxWriter`, importers | See Section 7 |
 *Exit per group:* its parity test passes (same counts and metrics as Unity within tolerance).
 
+**Goldens (needed before M3 gates can run).** Parity against Unity needs outputs produced *in Unity*: input arrays,
+parameters and output per feature. This container cannot make them. Plan a small **Editor export script on the Unity
+side** (writes input, parameters, result for each feature to a folder you push). Until goldens exist, parity means
+CLI vs WASM plus the procedural baseline.
+
 **M4 — Parity and CI.** Port the 120 tests to plain NUnit/xUnit; CI runs unit tests, the baseline gate,
 the **drift checks** (Section 6) and Playwright on every push.
 
@@ -150,7 +155,18 @@ is dropped. Import and export cover every format with a maintained library (Sect
 
 ## 6. Keeping the web version in step with the Unity asset
 
-This is a design requirement, not a nicety. Rules and machinery:
+This is a design requirement, not a nicety.
+
+**Two facts to settle first (your decisions):**
+- **Where do Unity changes come from?** The sync can only follow a repo that Unity changes are pushed to.
+  Today that is `RemesherDektop`, which belongs to the desktop session; its own plan proposes moving the code into
+  `native/` and `reference/unity/`, which would make `Assets/NativeRemesher` disappear and turn the bot red
+  permanently. And nothing reaches the web version until you push your local Unity changes somewhere.
+  **Recommended:** one dedicated Unity repo that you push to, which both the desktop and web versions read from.
+  If it is private, the bot needs a read token (a GitHub secret you add).
+- **Move the window's orchestration into `Runtime/`** (Section 6, rule 5). Recommended default; see below.
+
+Rules and machinery:
 
 1. **Never edit synced code.** `core/src/` is generated from `RemesherDektop@UPSTREAM_SHA` by `sync/`, kept out of git
    (the same reasoning as their own `Headless/` mirror: two copies free to drift is worse than none). Only the
@@ -169,13 +185,19 @@ This is a design requirement, not a nicety. Rules and machinery:
      fails CI.
    - **Settings census:** same for the fields of `RemeshSettings` and `RemeshProfile`.
    - **Baseline gate:** the web CLI output against upstream `Benchmarks/baseline.csv` at the new SHA.
+   - **Window-change diff** (works today, no refactor needed): the bot diffs `Editor/**` between `UPSTREAM_SHA` and
+     the new SHA. Any change labels the PR **"window orchestration changed, review facade"**. The static census
+     cannot see Editor-side changes (new preprocessing, call order, a new feature path), so this label is how
+     they are caught. M0 reads `Benchmark/EditorParity.cs`, which may already be a window-vs-pipeline harness to reuse.
 5. **The parameter manifest** (`manifest.json`: name, type, range, default, tooltip, group, enabled-when) drives the
    UI and the facade. The window's controls (`m_*` fields, `[Tooltip]`s, `GUILayout` labels) are the source of
-   truth. First version: written from the window by hand with the census tests above guarding it. **Recommended
-   upstream change (your call, in the Unity repo):** move the window's orchestration (the ~20-knob block and the
-   per-feature option sets) from `Editor/` into a `Runtime/` options type that the window and the web both call.
-   Then there is one place to change, and the manifest can be generated from it. Until then, the window's
-   orchestration is mirrored in the facade and watched by the census.
+   truth. **Recommended default
+   (needs your approval, a change in the Unity repo):** move the window's orchestration (the ~20-knob block,
+   Parts at 941 lines, Lods at 1,070, the Paint and bake blocks) from `Editor/` into a `Runtime/` job/options API
+   that the window calls. The **desktop app needs exactly the same thing**, so it is a shared change. Then there is
+   one place to change, the web facade becomes a thin call, and the manifest is generated from it. **Without it,**
+   most upstream feature changes need manual mirroring in the facade, guarded only by the censuses and the
+   window-change diff above; for "all features" that is a lot of hand-work, so I do not recommend it.
 6. **UI is re-implemented, not synced.** The Unity window is IMGUI (about 4,500 lines) and cannot be
    mechanically ported. The manifest keeps that re-implementation thin and checkable.
 
@@ -194,6 +216,13 @@ Blender `.blend`, …) need a converter and are out unless you name them. Large 
 ceiling as the remesher (M5). Each format gets a round-trip test (import → export → re-import, counts and bounds equal,
 quads preserved where the format allows).
 
+### Coordinates and import settings
+Unity is left-handed, Y-up; three.js is right-handed. `FbxWriter` and `symmetry` (X/Y/Z) assume Unity coordinates.
+**The core always works in Unity's convention.** Conversion happens only in the format layer, as an axis flip plus a
+winding flip, on both import and export. Unity's own FBX import settings (scale, normals, vertex welding) shape what the
+pipeline sees, so web-imported arrays will not exactly match Unity's for the same file; document the web importer's
+welding and scale rules. Round-trip tests check winding and the mirror axis too.
+
 ## 8. Open items (unverified — do not assume)
 
 1. **License.** Not checked: the repo has no LICENSE file, and the algorithm derives from Instant Meshes and
@@ -202,7 +231,8 @@ quads preserved where the format allows).
 3. **Float parity.** Unity's `Mathf` vs .NET `Math`/`MathF` can differ in the last bits. Parity means the
    metric tolerance in `baseline.csv`, never bit-exact output.
 4. **Static mutable knobs** leak between runs unless the facade snapshots and restores them (M0, tested in M1).
-5. **Tier-2 corpus** (real scans) is not in the repo, so real-world parity is limited to what you can supply.
+5. **Client vs. server and IP.** A browser-only build ships the remesher to every visitor in decompilable form. If this is commercial IP, that argues for the server host. Your call.
+6. **Tier-2 corpus** (real scans) is not in the repo, so real-world parity is limited to what you can supply.
 
 ## 9. Repo layout
 
