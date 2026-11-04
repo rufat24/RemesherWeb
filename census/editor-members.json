@@ -1,0 +1,958 @@
+{
+ "NativeRemesherWindow.AllSewn(List<PartBake.Part>inputs)": {
+  "status": "pending:bake",
+  "sha": "cfe16cbdb6300842",
+  "refs": "4efabb47f62536ec"
+ },
+ "NativeRemesherWindow.AssignLayers(Materialmat,Dictionary<string,Texture2D>layers)": {
+  "status": "pending:bake",
+  "sha": "8a7f15f377fa29ca",
+  "refs": "582967534d0f909d"
+ },
+ "NativeRemesherWindow.AutoLevelQuads(GameObjecttarget)": {
+  "status": "pending:lods",
+  "sha": "6fa6b176ae3c4dd5",
+  "refs": "28d64a42d86bb628"
+ },
+ "NativeRemesherWindow.AutoTextureSizeNote(GameObjectroot)": {
+  "status": "ui-only",
+  "sha": "7f516ae1f540fea9",
+  "refs": "582967534d0f909d"
+ },
+ "NativeRemesherWindow.BuildLods(LodRunrun)": {
+  "status": "pending:lods",
+  "sha": "6104bb782326c47e",
+  "refs": "01f37f98eb1c8db2"
+ },
+ "NativeRemesherWindow.DrawCountSection()": {
+  "status": "ui-only",
+  "sha": "485d6f35f23475a0",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.DrawLodsSection(GameObjectsubject)": {
+  "status": "ui-only",
+  "sha": "83f254fd6bcf8b1a",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.DrawLoopsSection()": {
+  "status": "ui-only",
+  "sha": "969c59dff4e90178",
+  "refs": "d9623dcb72c43f4b"
+ },
+ "NativeRemesherWindow.DrawModelSection(boolmulti)": {
+  "status": "ui-only",
+  "sha": "c24c2dbff911f79a",
+  "refs": "a7e2aa8e22be04c9"
+ },
+ "NativeRemesherWindow.DrawPaintGUI(GameObjectsource)": {
+  "status": "ui-only",
+  "sha": "0342da6c3dc79712",
+  "refs": "ca0ea105b515fd6f"
+ },
+ "NativeRemesherWindow.DrawResultSection(GameObjectsubject)": {
+  "status": "ui-only",
+  "sha": "873c6a87f4559c07",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.DrawRunControls(Meshmesh,GameObjectselected,boolmulti,List<GameObject>parts,GameObjectpartsRoot,stringpartsError)": {
+  "status": "ui-only",
+  "sha": "581eeb560671f18b",
+  "refs": "f2b783e561284d41"
+ },
+ "NativeRemesherWindow.DrawTitle(stringsubject)": {
+  "status": "ui-only",
+  "sha": "e2604a4a5be9f36d",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.DrawTypeSettings()": {
+  "status": "ui-only",
+  "sha": "d481deb9ff13dcc1",
+  "refs": "fd9ad2b315979f8c"
+ },
+ "NativeRemesherWindow.EndLevelChain(boolok,stringmessage)": {
+  "status": "pending:lods",
+  "sha": "b8e28e90fb2a88e8",
+  "refs": "b7c895b1175b7352"
+ },
+ "NativeRemesherWindow.FinishJob(RemeshResultresult,GameObjectselected,MaterialoverrideMaterials=null)": {
+  "status": "pending:bake",
+  "sha": "b4538de1fcd0d643",
+  "refs": "ff834242e4b403dd"
+ },
+ "NativeRemesherWindow.FinishLods(LodRunrun)": {
+  "status": "pending:lods",
+  "sha": "cd57e8f8392775c3",
+  "refs": "66b1c3581fe51f95"
+ },
+ "NativeRemesherWindow.FinishParts(PartsRunrun)": {
+  "status": "pending:parts",
+  "sha": "1a4ae13223b7e222",
+  "refs": "10fc37756cd44036"
+ },
+ "NativeRemesherWindow.FixAreasSummary(GameObjectsource)": {
+  "status": "ui-only",
+  "sha": "f4262d91bb25db08",
+  "refs": "b0abcc81960f1caf"
+ },
+ "NativeRemesherWindow.GetSelectedMesh(outGameObjectselected,outstringerror)": {
+  "status": "n/a:unity-scene-selection",
+  "sha": "dfb037cf5b3e76e5",
+  "refs": "b7b5d6dbab69f12d"
+ },
+ "NativeRemesherWindow.GetSelectedParts(outGameObjectroot,outstringerror)": {
+  "status": "n/a:unity-scene-selection",
+  "sha": "e168bb7285b7e494",
+  "refs": "582967534d0f909d"
+ },
+ "NativeRemesherWindow.GroupIsOurs(GameObjecttarget)": {
+  "status": "n/a:unity-scene-selection",
+  "sha": "31df00ed4233d4f7",
+  "refs": "582967534d0f909d"
+ },
+ "NativeRemesherWindow.IsLayer(Materialmaterial,stringproperty)": {
+  "status": "ui-only",
+  "sha": "394052316b270796",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.IsLevelObject(Transformt,Transformtarget)": {
+  "status": "ui-only",
+  "sha": "e94693801cb44f9a",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.IsResult(GameObjectgo,GameObjectroot)": {
+  "status": "n/a:unity-scene-selection",
+  "sha": "ad5d1fb28bb37146",
+  "refs": "28d64a42d86bb628"
+ },
+ "NativeRemesherWindow.LayerProperties(IEnumerable<Material>materials)": {
+  "status": "pending:bake",
+  "sha": "3f0c837a5aedb7a1",
+  "refs": "582967534d0f909d"
+ },
+ "NativeRemesherWindow.LevelChainStage()": {
+  "status": "ui-only",
+  "sha": "75963b73312f0d77",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.LevelMaterial(Materialfrom,Texture2Dalbedo,Texture2Dnormals,stringfolder,stringname,Dictionary<Material,Material>made,Texture2Docclusion=null)": {
+  "status": "pending:lods",
+  "sha": "e7f6c5ecae742d85",
+  "refs": "582967534d0f909d"
+ },
+ "NativeRemesherWindow.LevelResolution(LodRunrun,intlevel)": {
+  "status": "ui-only",
+  "sha": "817d64158462ded9",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.LodFolder(LodRunrun)": {
+  "status": "pending:lods",
+  "sha": "8ac1aeab7cf9aeb8",
+  "refs": "582967534d0f909d"
+ },
+ "NativeRemesherWindow.LodTarget(GameObjectsubject)": {
+  "status": "ui-only",
+  "sha": "9661cdebb4f39fb5",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.MakeLods(GameObjecttarget)": {
+  "status": "pending:lods",
+  "sha": "ac7c47cd44e1b59c",
+  "refs": "c3ebe1a4221b28e2"
+ },
+ "NativeRemesherWindow.ManualLevelQuads(intauto)": {
+  "status": "ui-only",
+  "sha": "9d19fd1720a545f4",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.MeshOn(GameObjectgo)": {
+  "status": "n/a:unity-scene-selection",
+  "sha": "082e9407e18a9c7f",
+  "refs": "f2b783e561284d41"
+ },
+ "NativeRemesherWindow.MeshSummary(GameObjectselected,Meshmesh)": {
+  "status": "ui-only",
+  "sha": "de5c8724a953624f",
+  "refs": "f2b783e561284d41"
+ },
+ "NativeRemesherWindow.NewLayer(IEnumerable<Material>materials,stringproperty,TextureBake.Imageimages,inttriangleImage)": {
+  "status": "pending:bake",
+  "sha": "d71c6855e190e1dc",
+  "refs": "55403c79ab925b36"
+ },
+ "NativeRemesherWindow.OnDisable()": {
+  "status": "ui-only",
+  "sha": "03dac000c7da1962",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.OnEnable()": {
+  "status": "ui-only",
+  "sha": "1f2b3ad76232bf5a",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.OnGUI()": {
+  "status": "ui-only",
+  "sha": "e146895f78d51bd2",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.OnJobUpdate()": {
+  "status": "n/a:unity-scene-selection",
+  "sha": "5a11f9adc584476c",
+  "refs": "6e7d50e84f4731ef"
+ },
+ "NativeRemesherWindow.OnLevelsUpdate()": {
+  "status": "pending:lods",
+  "sha": "af9732b6c112e881",
+  "refs": "c004b3abaa7dbd94"
+ },
+ "NativeRemesherWindow.OnLodJobUpdate()": {
+  "status": "pending:lods",
+  "sha": "cd345cf30e462e28",
+  "refs": "6e7d50e84f4731ef"
+ },
+ "NativeRemesherWindow.OnPaintUndoRedo()": {
+  "status": "pending:paint",
+  "sha": "cd674e800fb3d1aa",
+  "refs": "b0abcc81960f1caf"
+ },
+ "NativeRemesherWindow.OnPartsJobUpdate()": {
+  "status": "pending:parts",
+  "sha": "3256289d6e08e833",
+  "refs": "6e7d50e84f4731ef"
+ },
+ "NativeRemesherWindow.Open()": {
+  "status": "ui-only",
+  "sha": "8d9dd9634846bcbf",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.PaintColour(floatvalue)": {
+  "status": "ui-only",
+  "sha": "3ecc102f8e232046",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.PaintFor(GameObjectsource)": {
+  "status": "pending:paint",
+  "sha": "882811eccb3c5c9e",
+  "refs": "64bb1a860d750ee3"
+ },
+ "NativeRemesherWindow.PaintSurface(outMeshmesh)": {
+  "status": "pending:paint",
+  "sha": "10744c2e0ebe7cbe",
+  "refs": "b7b5d6dbab69f12d"
+ },
+ "NativeRemesherWindow.PartsSummary(GameObjectroot,List<GameObject>parts)": {
+  "status": "ui-only",
+  "sha": "d21f3fb8e9bd98b6",
+  "refs": "582967534d0f909d"
+ },
+ "NativeRemesherWindow.PathUnder(Transformt,Transformtop)": {
+  "status": "ui-only",
+  "sha": "7f1d973a69d26401",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.PreparePaintMesh(Meshmesh)": {
+  "status": "pending:paint",
+  "sha": "737569f804ce2b8c",
+  "refs": "15c9005d9fc2caf3"
+ },
+ "NativeRemesherWindow.PrepareRun(outRemeshProfileprofile,outboolautoProfile)": {
+  "status": "ported:WebRemesher.Prepare",
+  "sha": "3f36341a30d81900",
+  "refs": "385ff5683df40e81",
+  "portedAs": "WebRemesher.Prepare"
+ },
+ "NativeRemesherWindow.QuadsOf(GameObjecttarget)": {
+  "status": "pending:lods",
+  "sha": "0876088332e4d070",
+  "refs": "582967534d0f909d"
+ },
+ "NativeRemesherWindow.ReadLayers(Materialmaterials,inttriangleSubmesh,inttriangleCount)": {
+  "status": "pending:bake",
+  "sha": "e9f94ca54f9bf6ba",
+  "refs": "55403c79ab925b36"
+ },
+ "NativeRemesherWindow.ReducedCloser(RendererbasePart,RendererlevelPart,Matrix4x4toTarget,inttriangles,PartBake.PartbaseSurface,SpatialGridbaseGrid,intsamples,floatremeshError,refLodChain.Inputinput,outfloaterror,outVector3positions,outintsurface)": {
+  "status": "pending:lods",
+  "sha": "cce5a2b7f5dcc0c2",
+  "refs": "c7fa7a8e9f517e4b"
+ },
+ "NativeRemesherWindow.RefreshOverlay(boolall,Vector3near=default,floatradius=0f)": {
+  "status": "pending:paint",
+  "sha": "736b4adcf99b465a",
+  "refs": "20552b1f3bda998f"
+ },
+ "NativeRemesherWindow.ReleasePaintMesh()": {
+  "status": "ui-only",
+  "sha": "43dd0b6a17e8ac4f",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.RunParts(GameObjectroot,List<GameObject>parts)": {
+  "status": "pending:parts",
+  "sha": "9859f614d831cd00",
+  "refs": "d579b3502b9cc682"
+ },
+ "NativeRemesherWindow.RunPipeline()": {
+  "status": "pending:bake",
+  "sha": "17b97d405d1fd60f",
+  "refs": "e406e55b8881a4b1"
+ },
+ "NativeRemesherWindow.RunSingle(GameObjectselected,Materialmaterials,Vector3positions,inttriangles,Vector2sourceUvs,inttriangleSubmesh,RemeshSettingssettings,RemeshProfileprofile,boolautoProfile)": {
+  "status": "pending:bake",
+  "sha": "cb9085078da0215c",
+  "refs": "e6229d5a2653ac83"
+ },
+ "NativeRemesherWindow.SafeName(stringname)": {
+  "status": "ui-only",
+  "sha": "90b5d4306f735c70",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.SaveFbx(RemeshResultresult,stringassetPath)": {
+  "status": "pending:export-fbx",
+  "sha": "cecc4a2e3ae2664d",
+  "refs": "40530383547c806d"
+ },
+ "NativeRemesherWindow.SaveLayers(RemeshResultresult,stringassetPath,stringsourceName)": {
+  "status": "pending:bake",
+  "sha": "e2f71bdb9196b60e",
+  "refs": "3c1f6896ac1e06bf"
+ },
+ "NativeRemesherWindow.SaveMeshAsset(RemeshResultresult,Meshmesh,stringsourceName,stringfolder=null)": {
+  "status": "n/a:unity-asset",
+  "sha": "7690adeb6674800d",
+  "refs": "defe7445e8a39d56"
+ },
+ "NativeRemesherWindow.Section(intnumber,stringtitle,stringsummary,refboolopen)": {
+  "status": "ui-only",
+  "sha": "e9aa5444302aed0a",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.SeeThrough(Materialmaterials)": {
+  "status": "pending:bake",
+  "sha": "48258329d68b1313",
+  "refs": "582967534d0f909d"
+ },
+ "NativeRemesherWindow.SetPainting(boolon)": {
+  "status": "ui-only",
+  "sha": "fe72a4e5a5a21b5f",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.SourceOf(GameObjectgo)": {
+  "status": "n/a:unity-scene-selection",
+  "sha": "3b865f7837a2ddfa",
+  "refs": "28d64a42d86bb628"
+ },
+ "NativeRemesherWindow.StartLevelChain(GameObjecttarget)": {
+  "status": "pending:lods",
+  "sha": "f502d0e2a4230573",
+  "refs": "9049d6f23a06f7bb"
+ },
+ "NativeRemesherWindow.Styles()": {
+  "status": "ui-only",
+  "sha": "58ce3f04202e423f",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.Surface(IList<Renderer>renderers,Matrix4x4toTarget,outVector3positions,outinttriangles)": {
+  "status": "pending:parts",
+  "sha": "2d020b07c4d0c6e5",
+  "refs": "5f7b5c278f0764f9"
+ },
+ "NativeRemesherWindow.TextureOf(Materialmaterial,boolnormalMap,stringproperty=null)": {
+  "status": "pending:bake",
+  "sha": "d1d40c1db174ad75",
+  "refs": "048df45c2258a7d0"
+ },
+ "NativeRemesherWindow.TextureSizeFor(IReadOnlyList<TextureBake.Image>images)": {
+  "status": "pending:bake",
+  "sha": "3d315244395ce838",
+  "refs": "ca0ac9e956c470e3"
+ },
+ "NativeRemesherWindow.ToFaces(inttriangles)": {
+  "status": "ui-only",
+  "sha": "25bac628203b70da",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.Triangles(LodRunrun,intlevel)": {
+  "status": "pending:lods",
+  "sha": "9e8a97f852aa0a6f",
+  "refs": "582967534d0f909d"
+ },
+ "NativeRemesherWindow.TrianglesOf(IList<Renderer>renderers)": {
+  "status": "pending:parts",
+  "sha": "d8de56a1a9d34ea4",
+  "refs": "582967534d0f909d"
+ },
+ "NativeRemesherWindow.TypeName(ModelTypetype)": {
+  "status": "ui-only",
+  "sha": "2959fb5812206e6a",
+  "refs": "9233c057d49b40a8"
+ },
+ "NativeRemesherWindow.TypeNote(RemeshResultresult)": {
+  "status": "pending:bake",
+  "sha": "0e8cee70ff7b1761",
+  "refs": "71eaee061e680d05"
+ },
+ "NativeRemesherWindow.UpgradeLodSettings()": {
+  "status": "ui-only",
+  "sha": "dae32fb727fb93e6",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field Accent": {
+  "status": "ui-only",
+  "sha": "517bebfa7fc284ca",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field floorShare": {
+  "status": "ui-only",
+  "sha": "1303d3a316e6df5b",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field hiddenCollapseWeight": {
+  "status": "ui-only",
+  "sha": "262e799c8fc4aaed",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field isRunning": {
+  "status": "ui-only",
+  "sha": "4e44301cc4ac7a77",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field jobRunning": {
+  "status": "ui-only",
+  "sha": "b30f2145ded4987c",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field k_Folder": {
+  "status": "ui-only",
+  "sha": "3c4a17c9bd4c89b6",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field k_LodMinQuads": {
+  "status": "ui-only",
+  "sha": "041de38ab0de49be",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field k_LodPartPixels": {
+  "status": "ui-only",
+  "sha": "10f8ca1c675bed67",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field k_TypeNames": {
+  "status": "ui-only",
+  "sha": "dea398055e78733d",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field k_TypeNotes": {
+  "status": "ui-only",
+  "sha": "4ebe1e8a27fb0cb0",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field k_Types": {
+  "status": "ui-only",
+  "sha": "5253bdf0bfbb793b",
+  "refs": "9233c057d49b40a8"
+ },
+ "NativeRemesherWindow.field lodErrorShare": {
+  "status": "ui-only",
+  "sha": "a084cd5621f792cb",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field lodReducedCloser": {
+  "status": "ui-only",
+  "sha": "3e2c61cf2fb6c26b",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field lodReducedOver": {
+  "status": "ui-only",
+  "sha": "529235bab79884a7",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_BakeNormalMap": {
+  "status": "ui-only",
+  "sha": "4ed436e9e9113065",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_BakeTexture": {
+  "status": "ui-only",
+  "sha": "88caa88473390327",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_BrushSizePercent": {
+  "status": "ui-only",
+  "sha": "11cd83514cf176ec",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_BrushStrength": {
+  "status": "ui-only",
+  "sha": "7fcd8b0067501616",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_Cancel": {
+  "status": "ui-only",
+  "sha": "bd4b6676178c7409",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_CharacterSourceLoops": {
+  "status": "ui-only",
+  "sha": "4059fe97a7e57081",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_CharacterStraps": {
+  "status": "ui-only",
+  "sha": "9fed9213684c6653",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_CharacterThinRows": {
+  "status": "ui-only",
+  "sha": "e9647a6b593dee52",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_CombineParts": {
+  "status": "ui-only",
+  "sha": "b4c84c1c453313b3",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_CurveDetail": {
+  "status": "ui-only",
+  "sha": "ad8a1e8f07a12b6a",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_CurvesAddQuads": {
+  "status": "ui-only",
+  "sha": "a257bc42aa4c0837",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_Extraction": {
+  "status": "ui-only",
+  "sha": "e2dbf2fc442e5cc1",
+  "refs": "be4e39d13644b6f4"
+ },
+ "NativeRemesherWindow.field m_HardAcrossRounding": {
+  "status": "ui-only",
+  "sha": "e0da8872e8dd5bbe",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_HardDenseToNormalMap": {
+  "status": "ui-only",
+  "sha": "063558c454d34067",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_HardEdgesAtCount": {
+  "status": "ui-only",
+  "sha": "7dc5e1eeebe1203e",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_HardEvenRows": {
+  "status": "ui-only",
+  "sha": "9b5d63f5e726ab2e",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_HardFlatPanels": {
+  "status": "ui-only",
+  "sha": "346c7abec2ca2d24",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_HardMergeFlat": {
+  "status": "ui-only",
+  "sha": "193a30f916d5ae38",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_HardPlateRows": {
+  "status": "ui-only",
+  "sha": "06c4c2388a435496",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_HardRods": {
+  "status": "ui-only",
+  "sha": "74b001f4e7e9736e",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_HardRowsAtMerged": {
+  "status": "ui-only",
+  "sha": "41eea095f3a2014b",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_HardShapeRegions": {
+  "status": "ui-only",
+  "sha": "69976934ada654db",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_HardSourceLoops": {
+  "status": "ui-only",
+  "sha": "14790ef9194f5660",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_HardThinStrips": {
+  "status": "ui-only",
+  "sha": "5f13eb81c13fd15c",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_HardToCount": {
+  "status": "ui-only",
+  "sha": "09d232c01154c9ed",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_HasLastDab": {
+  "status": "ui-only",
+  "sha": "eb6288f4f83ddaa0",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_HiddenPartsFewer": {
+  "status": "ui-only",
+  "sha": "a7bc7402a6130606",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_HoverHit": {
+  "status": "ui-only",
+  "sha": "1420826d6fc927f4",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_HoverNormal": {
+  "status": "ui-only",
+  "sha": "4f59f4d4e12a3953",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_HoverPoint": {
+  "status": "ui-only",
+  "sha": "56c10fa029544967",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_JobMaterials": {
+  "status": "ui-only",
+  "sha": "ec6c592cd990239b",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_JobPartMaterials": {
+  "status": "ui-only",
+  "sha": "68241bb47672e880",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_JobParts": {
+  "status": "ui-only",
+  "sha": "7daa24e4b1ab2bce",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_JobProgress": {
+  "status": "ui-only",
+  "sha": "83dd47255dbf78c5",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_JobReplaces": {
+  "status": "ui-only",
+  "sha": "93c98e957986aecd",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_JobRoot": {
+  "status": "ui-only",
+  "sha": "4ef3d77895487494",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_JobSelected": {
+  "status": "ui-only",
+  "sha": "9df4ff0792b6b01d",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_JobStage": {
+  "status": "ui-only",
+  "sha": "23d00bbf1f80c1aa",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_JobWatch": {
+  "status": "ui-only",
+  "sha": "e6171b5e957a059a",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_LastDab": {
+  "status": "ui-only",
+  "sha": "283419640edb5ae9",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_LastMade": {
+  "status": "ui-only",
+  "sha": "0b4abc2f816b37e5",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_LastResult": {
+  "status": "ui-only",
+  "sha": "6dae595036a2a284",
+  "refs": "d2aaba5d4801165d"
+ },
+ "NativeRemesherWindow.field m_LodAutoQuads": {
+  "status": "ui-only",
+  "sha": "bf1a1280a3363e95",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_LodJob": {
+  "status": "ui-only",
+  "sha": "106244b90e339963",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_LodKeep": {
+  "status": "ui-only",
+  "sha": "06cfea6fee4c5e3c",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_LodLevels": {
+  "status": "ui-only",
+  "sha": "9d5868516d974207",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_LodOwnTextures": {
+  "status": "ui-only",
+  "sha": "6e1b766b8cd2bbeb",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_LodPixels": {
+  "status": "ui-only",
+  "sha": "7836833e785c0bdc",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_LodQuads": {
+  "status": "ui-only",
+  "sha": "63999e0865e15770",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_LodRemesh": {
+  "status": "ui-only",
+  "sha": "bb1d78e881ac8fd6",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_LodSettingsVersion": {
+  "status": "ui-only",
+  "sha": "682164888d671512",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_LodStatus": {
+  "status": "ui-only",
+  "sha": "2a58cf58f388dfb7",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_LongCreaseLoops": {
+  "status": "ui-only",
+  "sha": "54a62c49aca93d12",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_MakeLods": {
+  "status": "ui-only",
+  "sha": "f1f93b69394237c1",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_MaterialBorders": {
+  "status": "ui-only",
+  "sha": "7c6eb16d2c85fecc",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_ModelType": {
+  "status": "ui-only",
+  "sha": "eda24b393822210d",
+  "refs": "f1acf96f8fb0b7b8"
+ },
+ "NativeRemesherWindow.field m_OpenLods": {
+  "status": "ui-only",
+  "sha": "5017277690e66737",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_OpenModel": {
+  "status": "ui-only",
+  "sha": "de2443dff46ec1af",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_Overlay": {
+  "status": "pending:paint",
+  "sha": "47475b861c370e68",
+  "refs": "f2b783e561284d41"
+ },
+ "NativeRemesherWindow.field m_OverlayColors": {
+  "status": "ui-only",
+  "sha": "fa5d41c828e16ebb",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_OverlayMaterial": {
+  "status": "ui-only",
+  "sha": "4d52827f41930a9e",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_PaintGrid": {
+  "status": "pending:paint",
+  "sha": "f3926d3b99fe9242",
+  "refs": "3b6ebb844b55c940"
+ },
+ "NativeRemesherWindow.field m_PaintMesh": {
+  "status": "pending:paint",
+  "sha": "dea6d60f382ed19b",
+  "refs": "f2b783e561284d41"
+ },
+ "NativeRemesherWindow.field m_PaintMode": {
+  "status": "ui-only",
+  "sha": "1596abf031d5324c",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_PaintNormals": {
+  "status": "ui-only",
+  "sha": "16dbc9486a951719",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_PaintTriangles": {
+  "status": "ui-only",
+  "sha": "a59f522ef98ea2e9",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_PaintVertices": {
+  "status": "ui-only",
+  "sha": "aa52aed2ad38ba49",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_Painting": {
+  "status": "ui-only",
+  "sha": "60352ca8ff675ef0",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_PartsJob": {
+  "status": "ui-only",
+  "sha": "3e9dfab3f54ae9bf",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_QuadTopology": {
+  "status": "ui-only",
+  "sha": "ac341564948e334f",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_RoundParts": {
+  "status": "ui-only",
+  "sha": "d21891d9092fbe74",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_SaveAsAsset": {
+  "status": "ui-only",
+  "sha": "ae17972735e54a7f",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_ScanShapeRegions": {
+  "status": "ui-only",
+  "sha": "a3aad714a451c533",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_Scroll": {
+  "status": "ui-only",
+  "sha": "9ba771f0c0b600f5",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_ShowDetails": {
+  "status": "ui-only",
+  "sha": "23175d0b79003fdc",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_ShowTypeSettings": {
+  "status": "ui-only",
+  "sha": "4ec31b5614a91fca",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_Status": {
+  "status": "ui-only",
+  "sha": "68c122c3ebd9266d",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_Symmetry": {
+  "status": "ui-only",
+  "sha": "a2334cf191063aa6",
+  "refs": "d9623dcb72c43f4b"
+ },
+ "NativeRemesherWindow.field m_TargetQuadCount": {
+  "status": "ui-only",
+  "sha": "faa7bf59ce35c7a2",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_TextureSize": {
+  "status": "ui-only",
+  "sha": "e629e45b9a1c99a3",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field m_TypeNote": {
+  "status": "ui-only",
+  "sha": "1a3419fbb5a9a0b7",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field piecesCollapse": {
+  "status": "ui-only",
+  "sha": "53c3df12bf3abcd7",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field retryBudget": {
+  "status": "ui-only",
+  "sha": "e2d4e0b08b146ec9",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field retryCellsOff": {
+  "status": "ui-only",
+  "sha": "d3a521dcd92dbd41",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field s_LayerKeywords": {
+  "status": "ui-only",
+  "sha": "9880c7ed611d8c4b",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field s_NotLayers": {
+  "status": "ui-only",
+  "sha": "02aa792632832a7d",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field s_Scheduler": {
+  "status": "n/a:threading (the web build runs jobs on InlineScheduler)",
+  "sha": "51fbb23f8def36f3",
+  "refs": "13d1294110393b23"
+ },
+ "NativeRemesherWindow.field s_SectionSummary": {
+  "status": "ui-only",
+  "sha": "b291eba5f30990ea",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field sameParts": {
+  "status": "ui-only",
+  "sha": "3a12fc0ebe032f25",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field sewnParts": {
+  "status": "ui-only",
+  "sha": "0c05beb7f32ce5d8",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field sewnShare": {
+  "status": "ui-only",
+  "sha": "e3b44f6ea3ad5409",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.field thinFloors": {
+  "status": "ui-only",
+  "sha": "faaf047c8c7707f3",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.type LodPart": {
+  "status": "pending:lods",
+  "sha": "4692f730872cbcbd",
+  "refs": "6bb0db33d43e6b48"
+ },
+ "NativeRemesherWindow.type LodRun": {
+  "status": "pending:lods",
+  "sha": "a5ffb138a4fae248",
+  "refs": "be4bd715c2bc8364"
+ },
+ "NativeRemesherWindow.type PaintMode": {
+  "status": "ui-only",
+  "sha": "8b82d29496f8d2ce",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.type PartsRun": {
+  "status": "pending:parts",
+  "sha": "639e8abefd6c1e6a",
+  "refs": "d2aaba5d4801165d"
+ },
+ "NativeRemesherWindow.type WeldCellComparer": {
+  "status": "ui-only",
+  "sha": "9b6bee75610413a7",
+  "refs": "e3b0c44298fc1c14"
+ },
+ "NativeRemesherWindow.type WeldEdgeComparer": {
+  "status": "ui-only",
+  "sha": "5a08feb1950fd214",
+  "refs": "e3b0c44298fc1c14"
+ }
+}

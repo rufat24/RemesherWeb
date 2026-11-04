@@ -5,6 +5,7 @@ cd "$(dirname "$0")/.."
 step() { printf '\n== %s\n' "$*"; }
 step "upstream snapshot matches upstream.lock (no hand edits)";  tools/verify-upstream.sh
 step "window-field census";                                        python3 tools/census_window_fields.py
+step "every Editor member is fingerprinted (PrepareRun port, pending ports, ui-only)"; python3 tools/census_editor_members.py
 step "UI manifest is generated from the window and fresh";         python3 tools/gen_manifest.py --check
 step "drift checks fire on mutated sources (mutation tests)";      tools/test-drift.sh
 step "build the CLI (core + shim + orchestration)";                dotnet build cli -c Release -v q --nologo | tail -3

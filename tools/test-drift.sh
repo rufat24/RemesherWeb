@@ -24,4 +24,16 @@ mkdir -p "$T/ed"; cp upstream/Editor/NativeRemesherWindow*.cs "$T/ed/"
 sed -i 's/Clean quads keep their own loops/Clean quads keep their loops/' "$T/ed/NativeRemesherWindow.cs"; mexpect "changed label is caught" 1 "$T/ed"
 cp upstream/Editor/NativeRemesherWindow*.cs "$T/ed/"; sed -i 's/Mathf.Max(4, EditorGUILayout.IntField(/Mathf.Max(4, EditorGUILayout.IntField(  \/\/ x/' "$T/ed/NativeRemesherWindow.cs"
 sed -i 's/DisabledScope(m_HardEvenRows)/DisabledScope(m_HardEvenRowsX)/' "$T/ed/NativeRemesherWindow.cs"; mexpect "changed enable/disable rule is caught" 1 "$T/ed"
+
+# Editor members: the hand-ported PrepareRun and everything pending are fingerprinted
+eexpect() { python3 tools/census_editor_members.py "$3" >"$T/out" 2>&1; rc=$?; [ $rc -ne 0 ] && rc=1
+  if [ "$rc" = "$2" ]; then echo "ok   $1"; else echo "FAIL $1 (exit $rc, wanted $2)"; cat "$T/out"; fail=1; fi; }
+fresh() { rm -rf "$T/em"; mkdir -p "$T/em"; cp upstream/Editor/NativeRemesherWindow*.cs "$T/em/"; }
+fresh; eexpect "editor members match the census" 0 "$T/em"
+fresh; sed -i 's/RemeshPipeline.detailQuads = false;/RemeshPipeline.detailQuads = true;/' "$T/em/NativeRemesherWindow.cs"; eexpect "PrepareRun constant flip is caught" 1 "$T/em"
+fresh; sed -i 's/RemeshPipeline.detailQuads = false;/RemeshPipeline.detailQuads = false; RemeshPipeline.somethingNew = true;/' "$T/em/NativeRemesherWindow.cs"; eexpect "PrepareRun new static assignment is caught" 1 "$T/em"
+fresh; sed -i 's/static string MeshSummary(GameObject selected, Mesh mesh)/static string MeshSummary(GameObject selected, Mesh mesh) { RemeshPipeline.detailQuads = true; return ""; }\n static string MeshSummaryOld(GameObject selected, Mesh mesh)/' "$T/em/NativeRemesherWindow.cs"; eexpect "ui-only member gaining a Runtime reference is caught" 1 "$T/em"
+fresh; printf 'partial class NativeRemesherWindow { void BrandNew() { Foo.Bar(); } }\n' > "$T/em/NativeRemesherWindow.Extra.cs"; sed -i 's/partial class NativeRemesherWindow {/partial class NativeRemesherWindow : X {/' "$T/em/NativeRemesherWindow.Extra.cs"; eexpect "a new method is caught" 1 "$T/em"
+fresh; sed -i 's/void DrawCountSection()/void DrawCountSectionRenamed()/' "$T/em/NativeRemesherWindow.cs"; eexpect "a renamed/removed member is caught" 1 "$T/em"
+fresh; sed -i 's/Section(2, "How Many Quads"/Section(2, "How Many Quads Now"/' "$T/em/NativeRemesherWindow.cs"; eexpect "a label-only edit in a ui-only member is NOT noise" 0 "$T/em"
 exit $fail
