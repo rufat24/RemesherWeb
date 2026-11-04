@@ -1,133 +1,144 @@
-# RemesherWeb — Plan
+# RemesherWeb — Plan (v3, built on measured facts)
 
 Goal: run the **NativeRemesher** quad remesher in the browser.
 
-**Source of truth:** `rufat24/RemesherDektop`, branch `main` (commit `8766ead`), folder
-`Assets/NativeRemesher/`. That repo belongs to the desktop effort. **This repo only reads from it and
-never writes to it.** Read `Benchmarks/README.md` there as the authority on the algorithm's state.
+**Source of truth:** `rufat24/RemesherDektop`, branch `main`, commit `8766ead`, folder `Assets/NativeRemesher/`.
+That repo belongs to the desktop effort. **This repo only reads from it and never writes to it.**
+`Benchmarks/README.md` there (2,100 lines) is the authority on the algorithm's state.
 
-## What the source actually is (verified)
+## 1. What the source is (all verified by reading it)
 
 | Fact | Evidence |
 |---|---|
-| **Pure C#**, not a C++ DLL. Nothing to compile with Emscripten. | `README.md`: "no external engine, no native plugin" |
-| About **56,800 lines** in ~100 files under `Runtime/` (namespace `NativeRemesher`) | `wc -l` |
-| Algorithm: Instant Meshes (Jakob et al. 2015) plus pieces of QuadriFlow | root `README.md` |
-| **No Burst, Jobs, Unity.Mathematics, `unsafe` or `DllImport`.** Runtime asmdef references nothing. | grep |
-| The Unity dependency is the **value types**: `Vector3` (~2200 uses), `Mathf` (~1200), `Vector2`, `Vector2Int`, `Vector3Int`, `Vector4`, `Color32`, `Matrix4x4`, `Bounds`, `Ray`, `Debug`, `Random`. 74 of ~100 files use `UnityEngine`. | grep |
-| Real engine objects are touched in only **13 files**: `Mesh` (41 uses), a little `Material`, `Texture2D`, `GameObject`. Those are the adapter layer. | grep |
-| Parallelism is plain **`Parallel.For`** through `BackgroundScheduler.Options` (13 files). | grep |
-| Entry point: static `RemeshPipeline`, `RemeshSettings` struct in, `RemeshResult` out. Many **static mutable "debug" knobs** (not thread-safe). | `RemeshPipeline.cs` |
-| Existing test and quality gate: 120 NUnit tests (118 pass, 2 skipped) and `BenchmarkRunner` with a committed `Benchmarks/baseline.csv` and a tolerance (default 2%) on a **procedural** corpus, so no private assets are needed. | `Headless/README.md` |
-| An FBX writer, a quality-metrics set (`MeshMetrics`) and an OBJ reader/writer already exist. | file list |
+| Pure C#, no native plugin. About 56,800 lines, ~100 files in `Runtime/`, namespace `NativeRemesher`. | `README.md`, `wc -l` |
+| Algorithm: Instant Meshes (Jakob 2015) with pieces of QuadriFlow. | `README.md` |
+| No Burst, Jobs, `unsafe`, `DllImport`. Runtime asmdef references nothing. | grep |
+| Unity coupling is value types: `Vector3` (~2200 uses), `Mathf` (~1200), `Vector2/2Int/3Int/4`, `Color32`, `Matrix4x4`, `Bounds`, `Ray`, `Debug`, `Random`. 74 files. Real engine objects (`Mesh`, `Material`, `Texture2D`, `GameObject`) appear in **13 files**. | grep |
+| Entry point: `RemeshPipeline.Solve(positions, triangles, settings, profile, progress, …)` taking **plain arrays**. | `RemeshPipeline.cs:1057` |
+| `RemeshSettings` has: `targetQuadCount`, `orientationIterations`, `positionIterations`, `faceCountIterations`, `faceCountTolerance`, `symmetry` (X/Y/Z), `materialBorders`, `densityPaint`, `modelType` (General / Auto / Hard Surface / Scan / Character…), plus a legacy `mergeThreshold`. | `RemeshPipeline.cs:10` |
+| **The Editor window sets ~20 static `RemeshPipeline.*` knobs** before calling `Solve` (e.g. `ribbonParts`, `hardSurfaceSimplify`, `kinematicGuides`, `quadReductionCharacter` …), lines ~840–895 of `NativeRemesherWindow.cs`. These are the real parameter panel. Window code is ~4,500 lines (main 1,747; Lods 1,070; Parts 941; Paint 390). | `Editor/` |
+| Parallelism: `Parallel.For` everywhere, always through `BackgroundScheduler.Options`. **No** `Task.Wait`, `.Result`, `WaitAll`, `SemaphoreSlim`. Only `Interlocked` and `lock`, which are fine in WASM. | grep |
+| Tests: 120 NUnit (118 pass, 2 skipped). Quality gate: `BenchmarkRunner` against committed `Benchmarks/baseline.csv`, tolerance 2%, on a **procedural corpus generated in code** (no private assets needed). | `Headless/README.md`, `Benchmarks/README.md` |
 
-## Approach (recommended): compile the C# unchanged to WebAssembly
+## 2. Measured facts about this container
 
-Rewriting 57k lines of tuned numeric code in TypeScript or Rust would be the slowest and riskiest path.
-Instead:
-
-1. **UnityShim**: a tiny plain-.NET library that defines `UnityEngine.Vector3`, `Mathf`, `Vector2`,
-   `Matrix4x4`, … with the same names and semantics, so the ~100 Runtime files compile **without edits**.
-2. **Adapter** for the 13 files that touch `Mesh` / `Material` / `Texture2D`: either a minimal `Mesh`
-   shim holding arrays, or thin edits behind `#if`. Decide in M0 after reading those files.
-3. A **sync script** (like their `tools/sync-headless.sh`) copies `Runtime/` from a pinned commit into
-   `core/src/`. The copy is generated and never hand-edited.
-4. Shim **semantics**, not just names: Unity's approximate `Vector3 ==`, `normalized` returning zero for
-   tiny vectors, `Mathf.Round` behavior, `UnityEngine.Random` (5 uses: check whether seeded, since a
-   different sequence moves the baseline) and the one `UnityEngine.Rendering` use. Implement from Unity's
-   documented behavior; do not paste Unity reference source into this public repo.
-5. Build with the **.NET WebAssembly (`browser-wasm`)** target and call it from JS through
-   `[JSExport]` with flat typed arrays: positions `Float32Array`, indices `Uint32Array`, settings as JSON.
-6. Run it inside a **Web Worker**, with progress and cancel.
-
-### Alternatives considered
-
-| Option | Verdict |
+| Check | Result |
 |---|---|
-| **Unity WebGL build** | Heavy download, no real threads, awkward UI. Quick demo only. |
-| **Server-side .NET** (web UI uploads the mesh to a backend) | Full native speed and real multithreading, no WASM risk. Costs hosting and uploads. **Best fallback** if M1/M4 shows WASM is too slow or too memory-bound. |
-| **Rewrite in TS/Rust** | Rejected: 57k lines of tuned code, would lose parity. |
+| .NET 8 SDK | **Installs via `apt install dotnet-sdk-8.0`** (8.0.133). Microsoft's own download hosts are blocked, Ubuntu's archive is not. |
+| WASM AOT toolchain | **`dotnet workload install wasm-tools` succeeds** (Emscripten 3.1.34, NuGet reachable). |
+| Browser testing | Chromium + Playwright preinstalled. |
 
-## Milestones (each has an exit check)
+So M0–M2 can be built and tested **in this container**.
 
-**M0 — Compile and run outside Unity, on Linux.**
-Checks, in order:
-1. **Trace what `Editor/NativeRemesherWindow*.cs` (incl. `.Parts.cs`, `QuadSource.cs`) does around
-   `RemeshPipeline`.** The latest commit is about parts being sewn into one surface, and
-   `Benchmark/EditorParity.cs` exists, so the window may do orchestration the pipeline alone does not.
-   Whatever it does outside `Runtime/` must be synced or ported, or web output will not match what the
-   user sees in Unity.
-2. Install the .NET SDK (see risk 1).
-3. Widen the sync beyond `Runtime/`: the gate needs `MeshCorpus`, `MeshMetrics`, `BenchmarkRunner`
-   from `Benchmark/` (they use Unity types too). Confirm `Benchmarks/baseline.csv` actually matches the
-   pinned commit; a stale baseline would fail M0 even if the port is right.
-4. Build `UnityShim` + `core` + a small CLI (OBJ in, remesh, OBJ out).
+## 3. The two real risks, now sized
 
-*Exit:* compiles, and the procedural corpus run lands within the baseline tolerance.
+### Risk A — Threads: the scheduler cannot run in a browser as written
+`BackgroundScheduler` creates real OS `Thread`s and a `BlockingCollection`. Single-threaded browser-wasm
+cannot start threads, so the class must be replaced for the web build. That is small and contained: one
+~80-line file. The browser variant runs work inline and returns plain `ParallelOptions`; `Parallel.For`
+then runs sequentially. The desktop/server variant stays unchanged.
 
-**M0.5 — WASM spike (the real go/no-go, before any web-app work).**
-Run one small procedural case under `browser-wasm` **inside a dedicated Web Worker**, on the pinned .NET
-version. Single-threaded browser-wasm throws on blocking waits (`Task.Wait`, `.Result`, `WaitAll`,
-`SemaphoreSlim.Wait`), and `BackgroundScheduler.cs` has not been read yet. Node alone does not prove the
-Worker path. If this fails, the server-side fallback becomes the plan.
+### Risk B — Speed: single-threaded and not JIT-compiled
+Desktop numbers from the repo's own benchmarks (multi-threaded .NET 8, cores−1 threads):
 
-**M1 — WebAssembly build.**
-`browser-wasm` build, `[JSExport]` API, a Node smoke test running the same corpus under WASM.
-*Exit:* WASM output equals the M0 output (same counts, metrics within tolerance); record download size,
-time and peak memory versus native.
+| Case | Native time |
+|---|---|
+| procedural cube, 2,000 quads | 1.7 s |
+| `icosphere_320k` → 8,000 quads | 8.4 s |
+| 1.5M-triangle photogrammetry scan → 5.5k faces | 12–17 s |
 
-**M2 — Web app.**
-Vite + TypeScript + three.js: OBJ/PLY/GLB import, before/after view with a quad-edge wireframe, a
-parameters panel generated from `RemeshSettings`, a progress bar with cancel, OBJ export. The Web
-Worker is built here.
-*Exit:* load, remesh, view, export in a real browser (Playwright check).
+Browser expectations (**estimates, not measurements**): default .NET WASM *interprets* IL, which is
+typically an order of magnitude slower than JIT. AOT (installable here) typically lands around 2–4x
+slower than native, and we also lose the extra cores. Outlook:
+- small and medium meshes (up to a few tens of thousands of triangles, a few thousand quads): fine
+- large scans (hundreds of thousands to millions of triangles): minutes, plus WASM's 32-bit memory ceiling
+  (about 2–4 GB), so inputs must be capped or sent to a server
 
-**M3 — Parity and CI.**
-Port the 120 tests to plain NUnit/xUnit, run them in CI, run the baseline gate in CI, and add
-Playwright end-to-end tests.
-*Exit:* CI green on every push.
-
-**M4 — Performance and limits.**
-Measure before optimizing. Settle threads vs. single-threaded, memory ceiling (WASM practically tops
-out around 2 GB), max input size (reuse `PreDecimate`), and whether to ship a server fallback.
-*Exit:* documented limits and a decision on the fallback.
-
-**M5 — Deploy.** Static hosting with the right headers, plus a README.
-
-## Scope
-
-**In (core path):** import → `RemeshPipeline` with its settings → result mesh → export.
-**Out for now (Editor/Unity features, decide later):** density painting (`DensityPaint`, `RemeshPaint`),
-LOD chains, texture bake, attribute transfer, material labels and parts UI, FBX export. Each needs a
-separate decision on whether the web version wants it.
-
-## Risks and open items (unverified — do not assume)
-
-1. **.NET SDK is not installed** in this cloud container and network access to fetch it is untested.
-   M0 starts by checking this. If it cannot be installed here, M0 needs a different machine or CI.
-2. **Speed.** I have not read any performance numbers (`PerfProbe`, `Benchmarks/*.md`). WASM is typically
-   slower than native .NET, and `Parallel.For` in single-threaded WASM runs sequentially. Real meshes
-   (the reference scan is ~56 MB as OBJ) may be too slow without threads.
-3. **Threads.** .NET WASM multithreading is experimental and needs cross-origin isolation headers
-   (COOP/COEP), which GitHub Pages cannot set. This decides hosting. Open decision.
-4. **Static mutable knobs** in `RemeshPipeline` make it safe for **one remesh per worker at a time**.
-   Fine, but must be documented and tested.
-5. **Float parity.** Unity's `Mathf` and .NET's `Math`/`MathF` can differ in the last bits. Parity is
-   defined by the metric tolerance in `baseline.csv`, never by bit-exact output.
-6. **License.** Not checked. The algorithm is derived from published work (Instant Meshes, QuadriFlow).
-   Check the licenses of those parts before publishing a public site.
-7. **Public repo exposure.** `RemesherDektop` currently contains the whole Unity project and is public.
-   That is your call. The user-supplied scan referenced by the harness is not in it.
-8. **Which features do you want on the web?** See Scope.
-
-## Repo layout (proposal)
+**Therefore the architecture is "compile once, run on two hosts":**
 
 ```
-sync/            script that copies Runtime/ from a pinned RemesherDektop commit (read-only)
-shim/            UnityShim: Vector3, Mathf, Matrix4x4, ...
-core/            generated src copy + adapter for the 13 Mesh/Material files
-cli/             OBJ in, OBJ out; used for the parity gate
-wasm/            browser-wasm project + JSExport API
-web/             Vite app, Web Worker, three.js
-tests/           ported unit tests, baseline gate, Playwright specs
+            NativeRemesher core (C#, unchanged, synced from RemesherDektop@pinned)
+                   |                                   |
+       Browser host (WASM AOT, Worker)        Server host (.NET 8, real threads)
+       default, works offline, no upload      optional, large meshes, original scheduler
+                   \                                   /
+                  same flat-array JSON/binary API  →  same Web UI
+```
+
+Build the browser host first (it is what you asked for), but keep the API host-neutral so the server host
+is a small addition, not a rewrite. M4 decides, from measurements, whether it ships.
+
+## 4. Milestones (each has an exit check)
+
+**M0 — Core compiles outside Unity (Linux, .NET 8).**
+1. Trace what `NativeRemesherWindow*.cs` does around `Solve`: the static-knob block (~840–895), `Parts.cs`
+   (the latest commit is about parts sewn into one surface), `QuadSource.cs`, and `Benchmark/EditorParity.cs`.
+   Everything done outside `Runtime/` must be ported into a `WebRemesher` facade, or web output will not match Unity.
+2. `sync/` script copies `Runtime/` (plus the `Benchmark/` files the gate needs: `MeshCorpus`, `MeshMetrics`,
+   `BenchmarkRunner`) from the pinned commit into `core/src/`. Generated, never hand-edited.
+3. `shim/`: `UnityEngine.Vector3`, `Mathf`, `Matrix4x4`, … **with Unity's semantics, not just names**:
+   approximate `Vector3 ==`, `normalized` → zero for tiny vectors, `Mathf.Round` behavior, `UnityEngine.Random`
+   (5 uses: check whether seeded, since a different sequence moves the baseline), the one
+   `UnityEngine.Rendering` use. Implement from Unity's documented behavior; do not paste Unity reference
+   source into this public repo.
+4. Adapter for the 13 files that use `Mesh` / `Material` / `Texture2D` (minimal array-backed shim or `#if`).
+5. CLI: OBJ in → remesh → OBJ out.
+*Exit:* builds, and the procedural corpus lands within tolerance of `Benchmarks/baseline.csv`
+(first confirm the baseline matches the pinned commit; a stale baseline fails M0 even if the port is right).
+**This is the go/no-go for the whole project.**
+
+**M0.5 — WASM spike, inside a Web Worker, before any UI work.**
+`browser-wasm` + **AOT**, browser scheduler variant, one small procedural case.
+Record: output equals M0 (counts + metrics), wall time **AOT vs. interpreter**, download size, peak memory.
+Node alone does not prove the Worker path. *Exit:* a measured speed factor versus native. That number
+replaces the estimates in Risk B and fixes the input-size cap.
+
+**M1 — Browser host.** `[JSExport]` API with flat typed arrays (`Float32Array` positions, `Uint32Array`
+indices, settings object), progress and cancel, Worker wrapper.
+*Exit:* the corpus under WASM matches M0 within tolerance.
+
+**M2 — Web app.** Vite + TypeScript + three.js: OBJ/PLY/GLB import, before/after view with quad-edge wireframe,
+parameter panel built from the window's real controls (model type, the static knobs, `RemeshSettings`),
+progress/cancel, OBJ export.
+*Exit:* load → remesh → view → export in real Chromium (Playwright).
+
+**M3 — Parity and CI.** Port the 120 tests to plain NUnit/xUnit; CI runs unit tests, the baseline gate and
+Playwright on every push.
+
+**M4 — Limits and the server decision.** Using M0.5/M1 measurements: set the input-size cap (reuse
+`PreDecimate`, which took the 990k scan from 9 minutes to 6.5 s), decide whether to ship the server host,
+and whether threaded WASM is worth it (needs COOP/COEP headers, so not GitHub Pages).
+
+**M5 — Deploy.** Static hosting plus README; server host only if M4 says so.
+
+## 5. Scope
+
+**In (core path):** import → `Solve` with the window's real parameters (model type, symmetry, material
+borders, hard-surface/character/scan options) → result mesh → export OBJ.
+**Out for now, your call (each is real Editor code):** density painting (`DensityPaint`, `RemeshPaint`,
+window Paint 390 lines), LOD chains (Lods 1,070 lines), texture/normal-map bake (`TextureBake`), attribute/UV
+transfer, parts UI (Parts 941 lines), FBX export (`FbxWriter`).
+
+## 6. Open items (unverified — do not assume)
+
+1. **License.** Not checked: the repo has no LICENSE file, and the algorithm derives from Instant Meshes and
+   QuadriFlow. Resolve before the site goes public.
+2. **Public exposure.** `RemesherDektop` currently holds the whole Unity project and is public. Your call.
+3. **Float parity.** Unity's `Mathf` vs .NET `Math`/`MathF` can differ in the last bits. Parity means the
+   metric tolerance in `baseline.csv`, never bit-exact output.
+4. **Static mutable knobs** make one remesh per worker at a time. Fine, but document and test it.
+5. **Tier-2 corpus** (real scans) is not in the repo, so real-world parity is limited to what you can supply.
+6. **Which Editor features** you want on the web (Section 5).
+
+## 7. Repo layout
+
+```
+sync/    copies Runtime/ (+ needed Benchmark files) from the pinned RemesherDektop commit; read-only
+shim/    UnityShim: Vector3, Mathf, Matrix4x4, ...
+core/    generated src copy + adapters (+ browser BackgroundScheduler variant)
+cli/     OBJ in, OBJ out; drives the parity gate
+wasm/    browser-wasm AOT project + JSExport API
+web/     Vite app, Web Worker, three.js
+server/  optional .NET host (M4 decision)
+tests/   ported unit tests, baseline gate, Playwright specs
 ```
