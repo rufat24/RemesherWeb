@@ -34,7 +34,7 @@ jobs:
       - run: dotnet workload install wasm-tools
       - run: tools/sync-upstream.sh --from-lock
       - run: scripts/build-wasm.sh
-      - name: Web build, then the real UI in Chromium: every import format must give the same quad count
+      - name: "Web build, then the real UI in Chromium (every import format must give the same quad count)"
         working-directory: web
         run: |
           npm ci
