@@ -34,6 +34,10 @@ for m in re.finditer(r'public\s+([\w.]+)\s+(\w+)\s*=\s*([^;]+);\s*(?://\s*m_(\w+
     opt_fields[src or n[0].upper() + n[1:]] = (t, norm(re.sub(r'^\w+\.', '', v)) if t not in ('bool', 'int', 'float') else norm(v), n)
 
 errors = []
+na = pending.get('notApplicable', {})
+for n in sorted(na):
+    if n not in win_fields: errors.append(f'notApplicable list names m_{n} which no longer exists upstream')
+    if n in pending['pending']: errors.append(f'm_{n} is both notApplicable and pending')
 webui = pending.get('webUi', {})
 for n, f in sorted(webui.items()):
     if n not in win_fields: errors.append(f'webUi list names m_{n} which no longer exists upstream'); continue
@@ -49,12 +53,14 @@ for n, (t, v) in sorted(win_fields.items()):
         if n in pending['pending']: errors.append(f'm_{n}: ported as {on} but still listed pending -> remove it from the pending list')
         if (t == 'bool') != (ot == 'bool') or (ov != v and not (t in ('ModelType', 'SymmetryAxis') and ov == v)):
             errors.append(f'm_{n}: DEFAULT/TYPE CHANGED upstream: window {t} = {v}, RemeshOptions.{on} {ot} = {ov}')
+    elif n in na:
+        if norm(na[n]['default']) != norm(v): errors.append(f'm_{n}: DEFAULT CHANGED upstream (not applicable on the web): window {v}, census {na[n]["default"]} -> re-read whether it still has no web meaning')
     elif n in pending['pending'] or n in pending['uiOnly'] or n in webui: pass
     else: errors.append(f'm_{n} ({t} = {v}): NEW window field, neither in RemeshOptions nor in census/window-fields-pending.json')
 for n in sorted(set(pending['pending']) | set(pending['uiOnly'])):
     if n not in win_fields: errors.append(f'pending list names m_{n} which no longer exists upstream')
 for n, (_, _, on) in sorted(opt_fields.items()):
     if n not in win_fields: errors.append(f'RemeshOptions.{on} maps to m_{n}, which no longer exists upstream')
-print(f'window fields {len(win_fields)}: covered {sum(1 for n in win_fields if n in opt_fields)}, web-ui {len(webui)}, pending {sum(1 for n in win_fields if n in pending["pending"])}, ui-only {sum(1 for n in win_fields if n in pending["uiOnly"])}')
+print(f'window fields {len(win_fields)}: covered {sum(1 for n in win_fields if n in opt_fields)}, web-ui {len(webui)}, pending {sum(1 for n in win_fields if n in pending["pending"])}, ui-only {sum(1 for n in win_fields if n in pending["uiOnly"])}, not-applicable {len(na)}')
 for e in errors: print('DRIFT', e)
 sys.exit(1 if errors else 0)

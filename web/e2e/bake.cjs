@@ -17,10 +17,12 @@ const server = http.createServer((req, res) => {
   await page.setInputFiles('input[type=file]', ['tex.obj', 'tex.mtl', 'tex.png'].map(f => path.join(dir, f)));
   await page.waitForFunction(() => /vertices/.test(document.body.innerText)); const loaded = await page.evaluate(() => document.querySelector('.err, .note')?.textContent || '');
   await page.evaluate(() => { document.querySelector('#panel').scrollTop = 0; });
-  // choose a 1024 bake so the test stays quick
-  const sizeBtn = page.locator('button:text-is("1024")'); if (await sizeBtn.count()) await sizeBtn.first().click();
-  await page.click('button.primary');
+  // BAKE_SIZE picks the texture size (default 1024 so the test stays quick); the 4096 run is how memory and time of a big bake are measured
+  const size = process.env.BAKE_SIZE || '1024';
+  const sizeBtn = page.locator(`button:text-is("${size}")`); if (await sizeBtn.count()) await sizeBtn.first().click();
+  const t0 = Date.now(); await page.click('button.primary');
   await page.waitForFunction(() => /Result hash\s+[0-9a-f]{16}/.test(document.body.innerText), null, { timeout: 600000 });
+  const wallMs = Date.now() - t0;
   const text = await page.evaluate(() => document.body.innerText);
   const thumbs = await page.evaluate(() => [...document.querySelectorAll('#panel canvas')].map(c => { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; const seen = new Set(); for (let i = 0; i < d.length; i += 4) seen.add(d[i] << 16 | d[i + 1] << 8 | d[i + 2]); return { w: c.width, colours: seen.size }; }));
   const tex = (text.match(/Baked texture (\d+)px/) || [])[1], nrm = (text.match(/Baked normal map (\d+)px/) || [])[1];
@@ -31,6 +33,6 @@ const server = http.createServer((req, res) => {
   let listing = ''; try { listing = cp.execFileSync('unzip', ['-Z1', zipPath]).toString(); } catch (e) { listing = 'NOT A ZIP: ' + dl.suggestedFilename(); }
   const files = listing.split('\n').filter(Boolean);
   const ok = !!tex && !!nrm && thumbs.length >= 2 && thumbs.every(t => t.colours > 8) && files.some(f => f.endsWith('.obj')) && files.some(f => f.endsWith('.mtl')) && files.filter(f => f.endsWith('.png')).length >= 2 && errors.length === 0;
-  console.log(JSON.stringify({ loaded, tex, nrm, thumbs, files, ok, errors }));
+  console.log(JSON.stringify({ size, wallMs, loaded, tex, nrm, thumbs, files, ok, errors }));
   await browser.close(); server.close(); process.exit(ok ? 0 : 1);
 });

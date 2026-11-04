@@ -13,6 +13,7 @@ namespace NativeRemesher.Wasm
     {
         static WebResult s_Last;
         static BakeInput s_Bake = new BakeInput();
+        static Host() { WebRemesher.MaxBakeSize = 4096; }   // 8192 exhausts the wasm heap (measured: OutOfMemory with a normal map alone)
 
         /// <summary>
         /// The source's textures for the bakes, set before Remesh. kind: "color" (main textures) or "detail" (the source's own normal maps).

@@ -1,33 +1,41 @@
 {
-  "_comment": "Window [SerializeField] fields not in RemeshOptions yet. 'pending' = a feature the web app must still port (milestone in PLAN.md section 3); 'uiOnly' = foldout/section state with no behaviour. A field in neither list, or in 'pending' after it was ported, fails tools/census_window_fields.py. 'webUi' = ported in the web UI (not a RemeshOptions field): the named file must carry a '// window: m_Name = <default>' marker equal to the window's initialiser.",
-  "pending": [
-    "CombineParts",
-    "HiddenPartsFewer",
-    "SaveAsAsset",
-    "QuadTopology",
-    "MakeLods",
-    "LodLevels",
-    "LodKeep",
-    "LodPixels",
-    "LodOwnTextures",
-    "LodRemesh",
-    "LodAutoQuads",
-    "LodQuads",
-    "LodSettingsVersion"
-  ],
-  "uiOnly": [
-    "ShowTypeSettings",
-    "ShowDetails",
-    "OpenModel",
-    "OpenCount",
-    "OpenLoops",
-    "OpenFix",
-    "OpenResult",
-    "OpenLods"
-  ],
-  "webUi": {
-    "PaintMode": "web/src/paint.ts",
-    "BrushSizePercent": "web/src/paint.ts",
-    "BrushStrength": "web/src/paint.ts"
+ "_comment": "Window [SerializeField] fields not in RemeshOptions yet. 'pending' = a feature the web app must still port (milestone in PLAN.md section 3); 'uiOnly' = foldout/section state with no behaviour. A field in neither list, or in 'pending' after it was ported, fails tools/census_window_fields.py. 'webUi' = ported in the web UI (not a RemeshOptions field): the named file must carry a '// window: m_Name = <default>' marker equal to the window's initialiser.",
+ "pending": [
+  "CombineParts",
+  "HiddenPartsFewer",
+  "MakeLods",
+  "LodLevels",
+  "LodKeep",
+  "LodPixels",
+  "LodOwnTextures",
+  "LodRemesh",
+  "LodAutoQuads",
+  "LodQuads",
+  "LodSettingsVersion"
+ ],
+ "uiOnly": [
+  "ShowTypeSettings",
+  "ShowDetails",
+  "OpenModel",
+  "OpenCount",
+  "OpenLoops",
+  "OpenFix",
+  "OpenResult",
+  "OpenLods"
+ ],
+ "webUi": {
+  "PaintMode": "web/src/paint.ts",
+  "BrushSizePercent": "web/src/paint.ts",
+  "BrushStrength": "web/src/paint.ts"
+ },
+ "notApplicable": {
+  "SaveAsAsset": {
+   "default": "true",
+   "reason": "Writes Unity .asset/.fbx files into the project. The web app always exports through the Download button."
+  },
+  "QuadTopology": {
+   "default": "false",
+   "reason": "Chooses MeshTopology.Quads for the Unity Mesh object. The web app exports from the face list, so OBJ/FBX keep the quads and triangle formats triangulate."
   }
+ }
 }

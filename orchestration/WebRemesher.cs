@@ -76,11 +76,24 @@ namespace NativeRemesher.Web
             var detailMaps = o.bakeNormalMap && sourceUvs != null ? bake?.detailMaps : null;
             var detailTriangleMap = detailMaps != null ? bake.detailTriangleMap : null;
             if (detailMaps != null && detailTriangleMap == null) detailTriangleMap = new int[triangles.Length / 3];   // one map over the whole mesh
-            var resolution = TextureSizeFor(o.textureSize, bakeImages);
+            var resolution = BakeResolution(o.textureSize, bakeImages);
             if (bakeImages != null)
                 RemeshPipeline.BakeTexture(solved, positions, triangles, sourceUvs, triangleTexture, bakeImages, resolution, progress, null);
             if (o.bakeNormalMap)
                 RemeshPipeline.BakeNormalMap(solved, positions, triangles, resolution, progress, detailMaps != null ? sourceUvs : null, detailTriangleMap, detailMaps);
+        }
+
+        /// <summary>The largest bake the host can hold. The browser build sets it (Host): at 8192 the wasm heap runs out. The default leaves Unity's behaviour alone.</summary>
+        public static int MaxBakeSize = int.MaxValue;
+        internal static string s_CapNote;
+
+        /// <summary>TextureSizeFor, held to what the host can bake (MaxBakeSize); the note says when it was.</summary>
+        public static int BakeResolution(int chosen, IReadOnlyList<TextureBake.Image> images)
+        {
+            var resolution = TextureSizeFor(chosen, images);
+            s_CapNote = null;
+            if (resolution > MaxBakeSize) { s_CapNote = $"bake size capped from {resolution}px to {MaxBakeSize}px (the browser's memory limit)"; resolution = MaxBakeSize; }
+            return resolution;
         }
 
         /// <summary>NativeRemesherWindow.TextureSizeFor: the chosen size, else the largest source texture rounded up to a power of two in 1024..8192; 4096 with none.</summary>
@@ -162,7 +175,7 @@ namespace NativeRemesher.Web
             finally { try { System.IO.File.Delete(path); } catch { } }
         }
 
-        static byte[] Rgba(Color32[] c)
+        internal static byte[] Rgba(Color32[] c)
         {
             if (c == null) return null;
             var b = new byte[4 * c.Length];
@@ -170,7 +183,7 @@ namespace NativeRemesher.Web
             return b;
         }
 
-        static WebResult ToResult(RemeshResult solved)
+        internal static WebResult ToResult(RemeshResult solved)
         {
             // A turned (revolved) result has topology == null: read ONLY from extraction.
             var ex = solved.extraction;
@@ -195,7 +208,7 @@ namespace NativeRemesher.Web
             }
             r.bakedTexture = Rgba(solved.bakedTexture); r.bakedTextureSize = solved.bakedTextureSize;
             r.bakedNormalMap = Rgba(solved.bakedNormalMap); r.bakedNormalMapSize = solved.bakedNormalMapSize;
-            r.bakeNote = solved.bakeStats?.ToString();
+            r.bakeNote = (solved.bakeStats?.ToString() + (s_CapNote != null ? "; " + s_CapNote : "")).Trim(';', ' ');
             if (ex.uvs != null && ex.uvs.Length == n) { r.uvs = new float[2 * n]; for (var i = 0; i < n; i++) { r.uvs[2 * i] = ex.uvs[i].x; r.uvs[2 * i + 1] = ex.uvs[i].y; } }
             r.faceMaterials = ex.faceMaterials;
             ulong h = 1469598103934665603UL;

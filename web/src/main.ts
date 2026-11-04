@@ -7,6 +7,8 @@ import { startRemesh, type RemeshJob, type RemeshSummary } from './remesh-client
 import { Viewer } from './viewer';
 import { PaintState, type PaintMode } from './paint';
 
+// The browser build caps bakes at 4096 (8192 runs the wasm heap out of memory); the core clamps too, so a hand-set value cannot hang a job
+const MAX_BAKE_SIZE = 4096;
 interface Field { name: string; window: string; kind: string; default: unknown; label?: string; tooltip?: string; group: string; enum?: string; options?: { value: string; label: string }[]; min?: number; max?: number; step?: number; disabledWhen?: string }
 const fields = manifest.fields as unknown as Field[];
 const opts: Record<string, string | number | boolean> = Object.fromEntries(fields.map((f) => [f.name, f.default as string | number | boolean]));
@@ -111,7 +113,7 @@ function control(f: Field): HTMLElement {
     return el('label', { class: 'row' + (off ? ' off' : ''), title: tip }, cb, f.label ?? f.name);
   }
   if ((f.kind === 'enum' || f.kind === 'int') && f.options) {
-    const seg = el('div', { class: 'seg' }); f.options.forEach((o) => seg.append(el('button', { textContent: o.label, className: opts[f.name] === o.value ? 'on' : '', onclick: () => { opts[f.name] = o.value; renderSettings(); } })));
+    const seg = el('div', { class: 'seg' }); f.options.filter((o) => !(f.name === 'textureSize' && Number(o.value) > MAX_BAKE_SIZE)).forEach((o) => seg.append(el('button', { textContent: o.label, className: opts[f.name] === o.value ? 'on' : '', onclick: () => { opts[f.name] = o.value; renderSettings(); } })));
     const wrap = el('div', { title: tip, class: off ? 'off' : '' }, el('div', { class: 'note', textContent: f.label ?? f.name }), seg); wrap.querySelectorAll('button').forEach((b) => ((b as HTMLButtonElement).disabled = off)); return wrap;
   }
   const input = el('input', { type: f.name === 'curveDetail' ? 'range' : 'number', value: String(opts[f.name]), min: String(f.min ?? 0), step: String(f.step ?? 1) });
