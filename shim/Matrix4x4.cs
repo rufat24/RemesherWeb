@@ -166,6 +166,10 @@ namespace UnityEngine
         public float x, y, z, w;
         public Quaternion(float x, float y, float z, float w) { this.x = x; this.y = y; this.z = z; this.w = w; }
         public static Quaternion identity => new Quaternion(0F, 0F, 0F, 1F);
+        // Unity applies Euler angles in Z, X, Y order (documented): q = Y * X * Z.
+        public static Quaternion Euler(float x, float y, float z)
+            => AngleAxis(y, new Vector3(0, 1, 0)) * AngleAxis(x, new Vector3(1, 0, 0)) * AngleAxis(z, new Vector3(0, 0, 1));
+        public static Quaternion Euler(Vector3 e) => Euler(e.x, e.y, e.z);
         public static Quaternion AngleAxis(float angle, Vector3 axis)
         {
             axis = axis.normalized; float h = angle * Mathf.Deg2Rad * 0.5F; float s = Mathf.Sin(h);

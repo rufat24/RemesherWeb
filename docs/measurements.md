@@ -16,3 +16,10 @@ goldens per column over bands averaged across targets. E3c vs. staleness is sett
 
 Timing, CoreCLR net10: whole 36-row corpus 59 s on 4 threads, 77 s with `DOTNET_PROCESSOR_COUNT=1` (1.3x). Note this corpus is dominated by
 pre-decimation and small meshes; the WASM speed factor is measured in M0b.
+
+## Upstream test suite on CoreCLR (M0c)
+
+`dotnet test tests` over the unchanged `upstream/Tests/*.cs` (+ `upstream/Benchmark/*` minus `BenchmarkRunner`) against `shim/`:
+**Passed 249, Failed 0, Skipped 2, Total 251** in 6 min 12 s on 4 cores. The 2 skips are upstream's own `[Ignore]`d tests
+(e.g. `QuadFraction_OnVaryingCurvature_IsRecordedNotYetAtTarget`). The Unity-side count at this SHA is unknown (the Headless README's "120" is stale).
+`LogAssert` is a recording stub; unlike Unity it does not fail tests on unexpected error logs.

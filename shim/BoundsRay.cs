@@ -51,3 +51,32 @@ namespace UnityEngine
         public Vector3 GetPoint(float distance) => m_Origin + m_Direction * distance;
     }
 }
+namespace UnityEngine
+{
+    [System.Serializable]
+    public struct Rect : System.IEquatable<Rect>
+    {
+        float m_XMin, m_YMin, m_Width, m_Height;
+        public Rect(float x, float y, float width, float height) { m_XMin = x; m_YMin = y; m_Width = width; m_Height = height; }
+        public Rect(Vector2 position, Vector2 size) { m_XMin = position.x; m_YMin = position.y; m_Width = size.x; m_Height = size.y; }
+        public float x { get => m_XMin; set => m_XMin = value; }
+        public float y { get => m_YMin; set => m_YMin = value; }
+        public float width { get => m_Width; set => m_Width = value; }
+        public float height { get => m_Height; set => m_Height = value; }
+        public float xMin { get => m_XMin; set { float xm = xMax; m_XMin = value; m_Width = xm - m_XMin; } }
+        public float yMin { get => m_YMin; set { float ym = yMax; m_YMin = value; m_Height = ym - m_YMin; } }
+        public float xMax { get => m_Width + m_XMin; set => m_Width = value - m_XMin; }
+        public float yMax { get => m_Height + m_YMin; set => m_Height = value - m_YMin; }
+        public Vector2 center { get => new Vector2(x + m_Width / 2f, y + m_Height / 2f); set { m_XMin = value.x - m_Width / 2f; m_YMin = value.y - m_Height / 2f; } }
+        public Vector2 min => new Vector2(xMin, yMin);
+        public Vector2 max => new Vector2(xMax, yMax);
+        public Vector2 size => new Vector2(m_Width, m_Height);
+        public bool Contains(Vector2 point) => point.x >= xMin && point.x < xMax && point.y >= yMin && point.y < yMax;
+        public bool Overlaps(Rect other) => other.xMax > xMin && other.xMin < xMax && other.yMax > yMin && other.yMin < yMax;
+        public bool Equals(Rect o) => m_XMin == o.m_XMin && m_YMin == o.m_YMin && m_Width == o.m_Width && m_Height == o.m_Height;
+        public override bool Equals(object o) => o is Rect r && Equals(r);
+        public override int GetHashCode() => x.GetHashCode() ^ (width.GetHashCode() << 2) ^ (y.GetHashCode() >> 2) ^ (height.GetHashCode() >> 1);
+        public static bool operator ==(Rect l, Rect r) => l.Equals(r);
+        public static bool operator !=(Rect l, Rect r) => !l.Equals(r);
+    }
+}
