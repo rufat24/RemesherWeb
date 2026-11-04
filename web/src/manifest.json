@@ -1,0 +1,298 @@
+{
+ "generatedFrom": "upstream/Editor/NativeRemesherWindow*.cs (see upstream.lock)",
+ "modelTypes": [
+  {
+   "value": "Auto",
+   "label": "Auto"
+  },
+  {
+   "value": "Character",
+   "label": "Character"
+  },
+  {
+   "value": "HardSurface",
+   "label": "Hard Surface"
+  },
+  {
+   "value": "Scan",
+   "label": "Scan"
+  }
+ ],
+ "typeNotes": [
+  "Each part is read on its own, from its shape: sculpted, modelled or scanned.",
+  "Sculpted or organic: fingers and toes get rows of quads, straps and belts become tubes.",
+  "Modelled: clean-quad parts keep their own loops, panel lines become loops, tread and grilles go to the normal map.",
+  "Photogrammetry or a laser scan: noise is not taken for edges, walls and columns get rows along them."
+ ],
+ "sections": [
+  {
+   "n": 1,
+   "title": "The Model"
+  },
+  {
+   "n": 2,
+   "title": "How Many Quads"
+  },
+  {
+   "n": 3,
+   "title": "Edge Loops"
+  },
+  {
+   "n": 4,
+   "title": "Fix Areas"
+  },
+  {
+   "n": 5,
+   "title": "Result"
+  },
+  {
+   "n": 6,
+   "title": "Levels of Detail"
+  }
+ ],
+ "fields": [
+  {
+   "name": "roundParts",
+   "window": "m_RoundParts",
+   "kind": "bool",
+   "default": true,
+   "label": "Rings on turned parts, rows on extruded ones",
+   "tooltip": "Any kind. A piece a rotation sweeps -- a tyre, a rim, a disc, a bottle, a knob -- gets its quads in rings round its axis and rows along it; one an extrusion sweeps, in rows along it. Found by fitting the motion that slides the piece along itself.",
+   "group": "common"
+  },
+  {
+   "name": "characterSourceLoops",
+   "window": "m_CharacterSourceLoops",
+   "kind": "bool",
+   "default": true,
+   "label": "Clean quads keep their own loops",
+   "tooltip": "A model that already is clean quads (retopologised, modelled) is reduced by taking out whole edge rings, so its own loops and poles stay, instead of being remeshed.",
+   "group": "character"
+  },
+  {
+   "name": "characterStraps",
+   "window": "m_CharacterStraps",
+   "kind": "bool",
+   "default": true,
+   "label": "Straps and belts as tubes",
+   "tooltip": "Thin straps, belts and cords get clean tubes of quads round them.",
+   "group": "character"
+  },
+  {
+   "name": "characterThinRows",
+   "window": "m_CharacterThinRows",
+   "kind": "bool",
+   "default": true,
+   "label": "Rows across fingers and toes",
+   "tooltip": "Parts thinner than a few quads (fingers, toes, ears' rims) get quads across them, with the count raised to pay for it, instead of being flattened.",
+   "group": "character"
+  },
+  {
+   "name": "hardSourceLoops",
+   "window": "m_HardSourceLoops",
+   "kind": "bool",
+   "default": true,
+   "label": "Clean quads keep their own loops",
+   "tooltip": "A modelled part that already is clean quads (a car's panels) is reduced by taking out whole edge rings: its lips, flanges and panel edges stay its own. Parts that will not reduce cleanly (a tyre's tread at a few hundred quads) are remeshed.",
+   "group": "hard"
+  },
+  {
+   "name": "hardDenseToNormalMap",
+   "window": "m_HardDenseToNormalMap",
+   "kind": "bool",
+   "default": true,
+   "label": "Dense edges to the normal map",
+   "tooltip": "Sharp edges packed close (tread, grilles, vents) are left to the normal map; edges standing apart (panel lines) become edge loops.",
+   "group": "hard"
+  },
+  {
+   "name": "hardThinStrips",
+   "window": "m_HardThinStrips",
+   "kind": "bool",
+   "default": true,
+   "label": "Two quads across thin strips",
+   "tooltip": "Open strips narrower than a quad (pillar trims, flanges) get two quads across.",
+   "group": "hard"
+  },
+  {
+   "name": "hardRods",
+   "window": "m_HardRods",
+   "kind": "bool",
+   "default": true,
+   "label": "Quads round thin rods",
+   "tooltip": "Rods thinner than a few quads (pipes, handrails, a mirror's arm, a barrel) get quads round them, with the count raised to pay for it, instead of being dropped and leaving what they hold in the air.",
+   "group": "hard"
+  },
+  {
+   "name": "hardMergeFlat",
+   "window": "m_HardMergeFlat",
+   "kind": "bool",
+   "default": true,
+   "label": "Big quads on flat plates",
+   "tooltip": "On a dense model of plates, quads are merged where that costs no shape: a flat plate takes a few large quads, the parts keep theirs, and the count drops.",
+   "group": "hard",
+   "disabledWhen": "hardEvenRows"
+  },
+  {
+   "name": "hardEvenRows",
+   "window": "m_HardEvenRows",
+   "kind": "bool",
+   "default": false,
+   "label": "Even rows at the count",
+   "tooltip": "The quads are laid once, in even rows, at the count asked: the count is not raised for curved ground and the rows are not merged back down afterwards. Off: more quads on curves, then merged where flat. Faster, but on the cars, the house and the armoured car it leaves more folded and bent faces than the merging, so it is off by default.",
+   "group": "hard"
+  },
+  {
+   "name": "hardAcrossRounding",
+   "window": "m_HardAcrossRounding",
+   "kind": "bool",
+   "default": false,
+   "label": "Edges found across their rounding",
+   "tooltip": "An edge rounded over several triangles (a window frame, a door gap, a wheel arch) is measured across its rounding, so the rows follow it. Off: edge by edge, with the dense and the flat panels' tests (the default: sharper plates on the armoured car).",
+   "group": "hard"
+  },
+  {
+   "name": "hardFlatPanels",
+   "window": "m_HardFlatPanels",
+   "kind": "bool",
+   "default": true,
+   "label": "Flatten panels",
+   "tooltip": "The output's faces are faired at the end: where neighbouring faces nearly agree they are made to agree, so ripples in the source smaller than a quad (and the solve mesh's streaks) leave the panels flat instead of crumpled; the normal map carries them. Edges between panels stay sharp. Off: the points stay on the source as laid.",
+   "group": "hard"
+  },
+  {
+   "name": "hardEdgesAtCount",
+   "window": "m_HardEdgesAtCount",
+   "kind": "bool",
+   "default": true,
+   "label": "Small details to the normal map",
+   "tooltip": "Each edge is checked on the source at the size of a quad of the count asked: at a low count a door handle, a door's gap or a seam does not bend the rows and is left to the normal map, while window frames, sills and arches stay edges. At a higher count the smaller edges come back. Off: every edge found is kept at any count.",
+   "group": "hard"
+  },
+  {
+   "name": "hardToCount",
+   "window": "m_HardToCount",
+   "kind": "bool",
+   "default": false,
+   "label": "Merge down to the count (low poly)",
+   "tooltip": "Keep merging until the result has the count asked, even where it costs shape: edges, rods and parts are kept before the round surfaces, which turn faceted.",
+   "group": "hard",
+   "disabledWhen": "!hardMergeFlat || hardEvenRows"
+  },
+  {
+   "name": "hardPlateRows",
+   "window": "m_HardPlateRows",
+   "kind": "bool",
+   "default": true,
+   "label": "Plates in rows",
+   "tooltip": "Before the merging, quads on a flat plate are merged nine at a time into rows of big quads that follow the plate's edges, with a ring of steps round them, and kept so.",
+   "group": "hard",
+   "disabledWhen": "!hardMergeFlat || hardEvenRows"
+  },
+  {
+   "name": "hardRowsAtMerged",
+   "window": "m_HardRowsAtMerged",
+   "kind": "bool",
+   "default": false,
+   "label": "Even rows at the merged count",
+   "tooltip": "The quads are laid again in even rows at the count the merging came to, and not merged: the same faces, the doors and roofs flat instead of crumpled by the big merged quads. Takes a second solve. Off: the merged quads.",
+   "group": "hard",
+   "disabledWhen": "!hardMergeFlat || hardEvenRows"
+  },
+  {
+   "name": "hardShapeRegions",
+   "window": "m_HardShapeRegions",
+   "kind": "bool",
+   "default": true,
+   "label": "Rings and rows inside parts too",
+   "tooltip": "Inside a piece, regions that are round (turned) or straight (extruded) get rings or rows along their shape.",
+   "group": "hard"
+  },
+  {
+   "name": "scanShapeRegions",
+   "window": "m_ScanShapeRegions",
+   "kind": "bool",
+   "default": true,
+   "label": "Rows along walls and columns",
+   "tooltip": "Walls, columns and other straight or turned regions of the scan get rows or rings along their shape (ccnb at 5000: worst distance 0.0169 -> 0.0135).",
+   "group": "scan"
+  },
+  {
+   "name": "targetQuadCount",
+   "window": "m_TargetQuadCount",
+   "kind": "int",
+   "default": 2000,
+   "label": "Quads",
+   "tooltip": "How many quads to make. With curves adding theirs, this sizes the quads on flat ground and curved areas add more on top.",
+   "group": "common",
+   "min": 4,
+   "step": 100
+  },
+  {
+   "name": "curveDetail",
+   "window": "m_CurveDetail",
+   "kind": "float",
+   "default": 50.0,
+   "label": "Smaller quads on curves",
+   "tooltip": "How much smaller quads get where the surface curves, in percent -- and, when curves add quads, how many they add. 0 is an even grid everywhere; higher spends more on fingers, rims and folds.",
+   "group": "common",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "name": "curvesAddQuads",
+   "window": "m_CurvesAddQuads",
+   "kind": "bool",
+   "default": true,
+   "label": "Curves add quads",
+   "tooltip": "Curved areas get their smaller quads on top of the count, up to 3x it (5000 asked gives 11,000-14,000 on a character).",
+   "group": "common"
+  },
+  {
+   "name": "longCreaseLoops",
+   "window": "m_LongCreaseLoops",
+   "kind": "bool",
+   "default": true,
+   "label": "Along long creases",
+   "tooltip": "Creases that run as long clean lines (grooves, seams) get edge loops along them; short creases from scan noise are ignored. Matters on scans; Hard Surface finds its creases either way.",
+   "group": "common"
+  },
+  {
+   "name": "symmetry",
+   "window": "m_Symmetry",
+   "kind": "enum",
+   "default": "None",
+   "label": "Mirrored",
+   "tooltip": "One half is remeshed and mirrored in X, Y or Z, welded along the plane, so both sides get the same edge loops. The plane is the object's local origin when the mesh straddles it, else the middle of its bounds. Clean-quad models are then remeshed rather than reduced by their own loops.",
+   "enum": "SymmetryAxis",
+   "options": [
+    {
+     "value": "None",
+     "label": "Off"
+    },
+    {
+     "value": "X",
+     "label": "X"
+    },
+    {
+     "value": "Y",
+     "label": "Y"
+    },
+    {
+     "value": "Z",
+     "label": "Z"
+    }
+   ],
+   "group": "common"
+  },
+  {
+   "name": "materialBorders",
+   "window": "m_MaterialBorders",
+   "kind": "bool",
+   "default": false,
+   "label": "On material borders",
+   "tooltip": "The borders between the mesh's materials (submeshes) become edge loops, and the result keeps one submesh per material, with the source's materials on it.",
+   "group": "common"
+  }
+ ]
+}
