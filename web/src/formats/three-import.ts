@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
-import type { SourceMesh } from './mesh';
+import { isGlassName, type SourceMesh, type SourcePart } from './mesh';
 import type { TexImage } from './textures';
 
 function imageToTex(tex: THREE.Texture | null | undefined, name: string): TexImage | null {
@@ -18,7 +18,7 @@ function imageToTex(tex: THREE.Texture | null | undefined, name: string): TexIma
 export function sceneToSource(root: THREE.Object3D): SourceMesh {
   root.updateMatrixWorld(true);
   const pos: number[] = [], uv: number[] = [], tri: number[] = [], mat: number[] = [];
-  const names: string[] = []; let anyUv = false; let base = 0;
+  const names: string[] = []; const glass: boolean[] = []; const parts: SourcePart[] = []; let anyUv = false; let base = 0;
   const color: (TexImage | null)[] = [], normal: (TexImage | null)[] = []; const seen = new Map<THREE.Texture, TexImage | null>();
   const read = (t: THREE.Texture | null | undefined, name: string) => { if (!t) return null; if (!seen.has(t)) seen.set(t, imageToTex(t, name)); return seen.get(t)!; };
   root.traverse((o) => {
@@ -29,11 +29,11 @@ export function sceneToSource(root: THREE.Object3D): SourceMesh {
     // glTF textures are not flipped (v = 0 is the TOP row); the core and OBJ/FBX have v = 0 at the bottom
     const flipV = firstMat?.map?.flipY === false || firstMat?.normalMap?.flipY === false;
     for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p as THREE.BufferAttribute, i).applyMatrix4(mesh.matrixWorld); pos.push(v.x, v.y, v.z); if (uvA) { uv.push(uvA.getX(i), flipV ? 1 - uvA.getY(i) : uvA.getY(i)); anyUv = true; } else uv.push(0, 0); }
-    const idx = g.getIndex(); const n = idx ? idx.count : p.count;
+    const idx = g.getIndex(); const n = idx ? idx.count : p.count; const partFirst = tri.length / 3;
     const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
     const slotOf = (m: THREE.Material) => {
       const nm = m.name || 'material' + names.length; let i = names.indexOf(nm);
-      if (i < 0) { names.push(nm); i = names.length - 1; const sm = m as THREE.MeshStandardMaterial; color[i] = read(sm.map, nm + '_color'); normal[i] = read(sm.normalMap, nm + '_normal'); }
+      if (i < 0) { names.push(nm); i = names.length - 1; const sm = m as THREE.MeshStandardMaterial; glass[i] = !!m.transparent || isGlassName(nm); color[i] = read(sm.map, nm + '_color'); normal[i] = read(sm.normalMap, nm + '_normal'); }
       return i;
     };
     const groups = g.groups.length ? g.groups : [{ start: 0, count: n, materialIndex: 0 }];
@@ -45,10 +45,12 @@ export function sceneToSource(root: THREE.Object3D): SourceMesh {
       }
     }
     base += p.count;
+    const added = tri.length / 3 - partFirst; if (added > 0) parts.push({ name: mesh.name || o.name || 'part' + parts.length, first: partFirst, count: added });
   });
   const out: SourceMesh = { positions: Float32Array.from(pos), triangles: Int32Array.from(tri) };
   if (anyUv) out.uvs = Float32Array.from(uv);
-  if (names.length) { out.triangleMaterials = Int32Array.from(mat); out.materialNames = names; }
+  if (names.length) { out.triangleMaterials = Int32Array.from(mat); out.materialNames = names; out.materialGlass = glass; }
+  if (parts.length > 1) out.parts = parts;     // every mesh of the scene is a part (its node transform already applied)
   if (color.some(Boolean) || normal.some(Boolean)) out.embedded = { color, normal };
   return out;
 }

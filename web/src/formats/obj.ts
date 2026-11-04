@@ -1,4 +1,4 @@
-import type { QuadMesh, SourceMesh } from './mesh';
+import { isGlassName, type QuadMesh, type SourceMesh, type SourcePart } from './mesh';
 
 /**
  * OBJ -> SourceMesh (file space; call sourceToUnity after). Corners are keyed by (v, vt) so UVs stay index-parallel and a UV seam
@@ -10,6 +10,8 @@ export function parseObj(text: string): SourceMesh {
   const pos: number[] = [], uv: number[] = [], tri: number[] = [], mats: number[] = [];
   const corner = new Map<string, number>();
   const names: string[] = []; let cur = 0; let anyUv = false;
+  const parts: SourcePart[] = []; let partName = '', partStart = 0;
+  const closePart = () => { const n = tri.length / 3; if (n > partStart) parts.push({ name: partName || 'part' + parts.length, first: partStart, count: n - partStart }); partStart = n; };
   const getCorner = (vi: number, ti: number): number => {
     const key = vi + '/' + ti; let id = corner.get(key);
     if (id === undefined) {
@@ -36,13 +38,16 @@ export function parseObj(text: string): SourceMesh {
       }
       if (ids.length < 3) continue;
       for (let k = 1; k + 1 < ids.length; k++) { tri.push(ids[0], ids[k], ids[k + 1]); mats.push(cur); }
+    } else if (c === 111 /* o */ && line[1] <= ' ') {      // an object: one mesh of the model (g groups are sub-sets of a mesh and stay in it)
+      closePart(); partName = line.slice(1).trim();
     } else if (line.startsWith('usemtl')) {
       const n = line.slice(6).trim(); let i = names.indexOf(n); if (i < 0) { names.push(n); i = names.length - 1; } cur = i;
     }
   }
   const out: SourceMesh = { positions: Float32Array.from(pos), triangles: Int32Array.from(tri) };
   if (anyUv) out.uvs = Float32Array.from(uv);
-  if (names.length > 0) { out.triangleMaterials = Int32Array.from(mats); out.materialNames = names; }
+  if (names.length > 0) { out.triangleMaterials = Int32Array.from(mats); out.materialNames = names; out.materialGlass = names.map(isGlassName); }
+  closePart(); if (parts.length > 1) out.parts = parts;     // the model in parts only when the file has more than one object
   return out;
 }
 
@@ -51,7 +56,7 @@ export function parseObj(text: string): SourceMesh {
  * otherwise per-vertex UVs. `mtllib` is written when a material file goes with it (textures baked).
  */
 export function writeObj(m: QuadMesh, name = 'remeshed', mtl?: { file: string; material: string }): string {
-  const L: string[] = ['# NativeRemesher web export', 'o ' + name];
+  const L: string[] = ['# NativeRemesher web export']; if (!m.groups) L.push('o ' + name);
   if (mtl) L.push('mtllib ' + mtl.file);
   const n = m.positions.length / 3; const corners = m.faceIndices.length;
   const perCorner = !!m.cornerUvs && m.cornerUvs.length === 2 * corners; const perVertex = !perCorner && !!m.uvs && m.uvs.length === 2 * n;
@@ -60,8 +65,10 @@ export function writeObj(m: QuadMesh, name = 'remeshed', mtl?: { file: string; m
   else if (perVertex) for (let i = 0; i < n; i++) L.push('vt ' + m.uvs![2 * i] + ' ' + m.uvs![2 * i + 1]);
   if (mtl) L.push('usemtl ' + mtl.material);
   let o = 0, lastMat = -2;
+  const groupAt = new Map<number, string>(); for (const g of m.groups ?? []) if (g.count > 0) groupAt.set(g.first, g.name);
   for (let f = 0; f < m.faceSizes.length; f++) {
     const s = m.faceSizes[f];
+    if (groupAt.has(f)) L.push('o ' + groupAt.get(f));
     if (!mtl && m.faceMaterials && m.faceMaterials[f] !== lastMat) { lastMat = m.faceMaterials[f]; L.push('usemtl ' + (m.materialNames?.[lastMat] ?? 'material' + lastMat)); }
     let line = 'f';
     for (let k = 0; k < s; k++) { const i = m.faceIndices[o + k] + 1; line += perCorner ? ' ' + i + '/' + (o + k + 1) : perVertex ? ' ' + i + '/' + i : ' ' + i; }

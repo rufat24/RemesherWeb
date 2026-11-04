@@ -85,7 +85,7 @@
   "refs": "66b1c3581fe51f95"
  },
  "NativeRemesherWindow.FinishParts(PartsRunrun)": {
-  "status": "pending:parts",
+  "status": "ported:WebParts.Finish (+Merge, AsItWas)",
   "sha": "1a4ae13223b7e222",
   "refs": "10fc37756cd44036"
  },
@@ -215,7 +215,7 @@
   "refs": "b0abcc81960f1caf"
  },
  "NativeRemesherWindow.OnPartsJobUpdate()": {
-  "status": "pending:parts",
+  "status": "n/a:job polling is the worker protocol (remesh-worker.mjs)",
   "sha": "3256289d6e08e833",
   "refs": "6e7d50e84f4731ef"
  },
@@ -286,7 +286,7 @@
   "refs": "e3b0c44298fc1c14"
  },
  "NativeRemesherWindow.RunParts(GameObjectroot,List<GameObject>parts)": {
-  "status": "pending:parts",
+  "status": "ported:WebParts.Run + generated WebParts.SolveParts",
   "sha": "9859f614d831cd00",
   "refs": "d579b3502b9cc682"
  },
@@ -351,7 +351,7 @@
   "refs": "e3b0c44298fc1c14"
  },
  "NativeRemesherWindow.Surface(IList<Renderer>renderers,Matrix4x4toTarget,outVector3positions,outinttriangles)": {
-  "status": "pending:parts",
+  "status": "ported:web/src/formats (importers bake node transforms; parts = triangle ranges)",
   "sha": "2d020b07c4d0c6e5",
   "refs": "5f7b5c278f0764f9"
  },
@@ -376,7 +376,7 @@
   "refs": "582967534d0f909d"
  },
  "NativeRemesherWindow.TrianglesOf(IList<Renderer>renderers)": {
-  "status": "pending:parts",
+  "status": "ported:web/src/formats (importers bake node transforms; parts = triangle ranges)",
   "sha": "d8de56a1a9d34ea4",
   "refs": "582967534d0f909d"
  },
@@ -941,7 +941,7 @@
   "refs": "e3b0c44298fc1c14"
  },
  "NativeRemesherWindow.type PartsRun": {
-  "status": "pending:parts",
+  "status": "ported:WebParts PartsRun",
   "sha": "639e8abefd6c1e6a",
   "refs": "d2aaba5d4801165d"
  },

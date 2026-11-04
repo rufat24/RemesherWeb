@@ -42,12 +42,14 @@ export function toWorkerBake(set: { images: TexImage[]; triangleImage: Int32Arra
 }
 
 /** `newmtl` blocks of an MTL: per material its colour map (map_Kd) and normal/bump map (map_Bump, bump, norm). Option flags (-bm 1, -s ...) are skipped. */
-export function parseMtl(text: string): Map<string, { color?: string; normal?: string }> {
-  const out = new Map<string, { color?: string; normal?: string }>(); let cur: { color?: string; normal?: string } | null = null;
+export function parseMtl(text: string): Map<string, { color?: string; normal?: string; transparent?: boolean }> {
+  const out = new Map<string, { color?: string; normal?: string; transparent?: boolean }>(); let cur: { color?: string; normal?: string; transparent?: boolean } | null = null;
   const file = (rest: string) => { const t = rest.trim().split(/\s+/); let i = 0; while (i < t.length && t[i].startsWith('-')) i += ({ '-bm': 2, '-s': 4, '-o': 4, '-t': 4, '-mm': 3, '-clamp': 2, '-blendu': 2, '-blendv': 2, '-imfchan': 2, '-texres': 2, '-cc': 2 } as Record<string, number>)[t[i]] ?? 1; return t.slice(i).join(' ').split(/[\\/]/).pop()!; };
   for (const raw of text.split('\n')) {
     const l = raw.trim(); if (!l || l[0] === '#') continue; const sp = l.indexOf(' '); if (sp < 0) continue; const key = l.slice(0, sp).toLowerCase(), rest = l.slice(sp + 1);
     if (key === 'newmtl') { cur = {}; out.set(rest.trim(), cur); } else if (cur && key === 'map_kd') cur.color = file(rest);
+    else if (cur && key === 'd') cur.transparent = parseFloat(rest) < 1;
+    else if (cur && key === 'tr') cur.transparent = parseFloat(rest) > 0;
     else if (cur && (key === 'map_bump' || key === 'bump' || key === 'norm')) cur.normal = file(rest);
   }
   return out;

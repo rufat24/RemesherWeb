@@ -46,6 +46,9 @@ namespace NativeRemesher.Web
         /// <summary>Call once at host startup, before any job: captures the pristine statics.</summary>
         public static void Init() { s_Snapshot ??= StaticsSnapshot.Capture(typeof(RemeshPipeline).Assembly); }
 
+        /// <summary>Jobs must not inherit each other's statics (also for the parts run).</summary>
+        internal static void RestoreStatics() { Init(); if (!DisableStaticsRestore) s_Snapshot.Restore(); }
+
         public static WebResult Run(Vector3[] positions, int[] triangles, Vector2[] sourceUvs, int[] triangleMaterials,
                                     RemeshOptions o, Action<string, float> progress = null, double[] dabs = null, BakeInput bake = null)
         {

@@ -1,8 +1,6 @@
 {
  "_comment": "Window [SerializeField] fields not in RemeshOptions yet. 'pending' = a feature the web app must still port (milestone in PLAN.md section 3); 'uiOnly' = foldout/section state with no behaviour. A field in neither list, or in 'pending' after it was ported, fails tools/census_window_fields.py. 'webUi' = ported in the web UI (not a RemeshOptions field): the named file must carry a '// window: m_Name = <default>' marker equal to the window's initialiser.",
  "pending": [
-  "CombineParts",
-  "HiddenPartsFewer",
   "MakeLods",
   "LodLevels",
   "LodKeep",

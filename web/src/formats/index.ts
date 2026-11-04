@@ -124,6 +124,7 @@ export async function importFiles(files: File[]): Promise<{ mesh: SourceMesh; na
     const m = parseMtl(await mtl.text()); const color: (TexImage | null)[] = [], normal: (TexImage | null)[] = [];
     mesh.materialNames.forEach((n, i) => { const e = m.get(n); color[i] = e?.color ? images.get(e.color.toLowerCase()) ?? null : null; normal[i] = e?.normal ? images.get(e.normal.toLowerCase()) ?? null : null; });
     if (color.some(Boolean) || normal.some(Boolean)) mesh.embedded = { color, normal };
+    mesh.materialGlass = mesh.materialNames.map((n, i) => !!m.get(n)?.transparent || !!mesh.materialGlass?.[i]);   // d / Tr make a material see-through too
   }
   return { mesh, name: model.name.replace(/\.[^.]+$/, ''), images };
 }

@@ -41,6 +41,9 @@ namespace NativeRemesher.Web
         public bool bakeTexture = true;             // m_BakeTexture
         public bool bakeNormalMap = true;           // m_BakeNormalMap
         public int textureSize = 0;                 // m_TextureSize
+        // --- Model in parts (window lines 60-62) ---
+        public bool combineParts = false;           // m_CombineParts
+        public bool hiddenPartsFewer = true;        // m_HiddenPartsFewer
 
         public static RemeshOptions FromJson(string json)
         {

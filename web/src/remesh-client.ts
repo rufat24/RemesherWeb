@@ -1,7 +1,7 @@
-import type { QuadMesh, SourceMesh } from './formats/mesh';
+import { partSeeThrough, type QuadMesh, type SourceMesh } from './formats/mesh';
 import type { toWorkerBake } from './formats/textures';
 
-export interface RemeshSummary { textureSize: number; normalMapSize: number; bakeNote: string; quads: number; tris: number; ngons: number; verts: number; hash: string; totalMs: number; hasUvs: boolean }
+export interface RemeshSummary { textureSize: number; normalMapSize: number; bakeNote: string; quads: number; tris: number; ngons: number; verts: number; hash: string; totalMs: number; hasUvs: boolean; groups?: { name: string; first: number; count: number; kept: boolean }[]; partsNote?: string }
 export interface RemeshOutcome { mesh: QuadMesh; summary: RemeshSummary; bootMs: number }
 export interface RemeshJob { promise: Promise<RemeshOutcome>; cancel(): void }
 
@@ -21,6 +21,7 @@ export function startRemesh(src: SourceMesh, options: Record<string, unknown>, o
           summary: d.summary, bootMs: d.bootMs,
           mesh: { positions: Float32Array.from(d.positions), faceSizes: d.faceSizes, faceIndices: d.faceIndices,
                   uvs: d.uvs ? Float32Array.from(d.uvs) : undefined, faceMaterials: d.faceMaterials ?? undefined, materialNames: src.materialNames, fbx: d.fbx,
+                  groups: d.summary.groups?.length ? d.summary.groups : undefined,
                   cornerUvs: d.cornerUvs ? Float32Array.from(d.cornerUvs) : undefined,
                   texture: d.texture ? { size: d.summary.textureSize, rgba: d.texture } : undefined, normalMap: d.normalMap ? { size: d.summary.normalMapSize, rgba: d.normalMap } : undefined },
         });
@@ -31,6 +32,7 @@ export function startRemesh(src: SourceMesh, options: Record<string, unknown>, o
       type: 'start', options, name, bake, dabs: dabs && dabs.length ? dabs : undefined,
       positions: Float64Array.from(src.positions), triangles: src.triangles,
       uvs: src.uvs ? Float64Array.from(src.uvs) : undefined, triangleMaterials: src.triangleMaterials,
+      parts: src.parts && src.parts.length > 1 ? { ranges: Int32Array.from(src.parts.flatMap((p) => [p.first, p.count])), names: src.parts.map((p) => p.name), seeThrough: partSeeThrough(src) } : undefined,
     }, bake ? [bake.color?.pixels.buffer, bake.detail?.pixels.buffer].filter(Boolean) as ArrayBuffer[] : []);
   });
   return { promise, cancel() { worker.terminate(); rejectJob(new Error('cancelled')); } };

@@ -26,6 +26,26 @@ namespace NativeRemesher.Cli
         }
         static string Summary(WebResult r) =>
             $"{{\"quads\":{r.quadCount},\"tris\":{r.triangleCount},\"ngons\":{r.ngonCount},\"verts\":{r.positions.Length / 3},\"hash\":\"{r.hash}\",\"totalMs\":{r.totalMs}}}";
+        // An OBJ cut into parts at its `o` / `g` lines (what the web importer does): global vertices, triangles in file order, one range per group.
+        static (Vector3[], int[], Vector2[], int[], string[]) ReadObjParts(string path)
+        {
+            var pos = new List<Vector3>(); var uv = new List<Vector2>(); var tri = new List<int>(); var ranges = new List<int>(); var names = new List<string>();
+            var inv = System.Globalization.CultureInfo.InvariantCulture; var start = 0;
+            void Close() { if (tri.Count / 3 > start) { ranges.Add(start); ranges.Add(tri.Count / 3 - start); } start = tri.Count / 3; }
+            foreach (var line in File.ReadLines(path))
+            {
+                var t = line.Trim().Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+                if (t.Length == 0) continue;
+                if (t[0] == "v") pos.Add(new Vector3(float.Parse(t[1], inv), float.Parse(t[2], inv), float.Parse(t[3], inv)));
+                else if (t[0] == "o" || t[0] == "g") { Close(); names.Add(t.Length > 1 ? t[1] : "part" + names.Count); }
+                else if (t[0] == "f")
+                {
+                    var f = new int[t.Length - 1]; for (var i = 0; i < f.Length; i++) f[i] = int.Parse(t[i + 1].Split('/')[0]) - 1;
+                    for (var k = 1; k + 1 < f.Length; k++) { tri.Add(f[0]); tri.Add(f[k]); tri.Add(f[k + 1]); }
+                }
+            }
+            Close(); return (pos.ToArray(), tri.ToArray(), null, ranges.ToArray(), names.ToArray());
+        }
         public static int Main(string[] a)
         {
             if (a.Length >= 3 && a[0] == "case")
@@ -51,6 +71,21 @@ namespace NativeRemesher.Cli
                 foreach (var n in r.faceSizes) { var f = new int[n]; Array.Copy(r.faceIndices, k, f, 0, n); k += n; faces.Add(f); }
                 NativeRemesher.Benchmark.ObjWriter.Write(a[2], pos, faces, "remeshed");
                 Console.WriteLine(Summary(r));
+                return 0;
+            }
+            if (a.Length >= 3 && a[0] == "parts")    // cli parts in.obj out.obj [optionsJson]: the `o`/`g` groups of the OBJ are the model's parts
+            {
+                var (pos0, tri0, uv0, ranges, names) = ReadObjParts(a[1]);
+                var o = RemeshOptions.FromJson(a.Length > 3 ? a[3] : null);
+                var pr = WebParts.Run(WebParts.Split(pos0, tri0, uv0, null, ranges, names, null, null), o, null, null, null);
+                if (pr == null) { Console.WriteLine("{\"parts\":false}"); return 3; }
+                var m = pr.merged; var pos = new Vector3[m.positions.Length / 3];
+                for (var i = 0; i < pos.Length; i++) pos[i] = new Vector3(m.positions[3 * i], m.positions[3 * i + 1], m.positions[3 * i + 2]);
+                var faces = new List<int[]>(); var k = 0;
+                foreach (var n in m.faceSizes) { var f = new int[n]; Array.Copy(m.faceIndices, k, f, 0, n); k += n; faces.Add(f); }
+                NativeRemesher.Benchmark.ObjWriter.Write(a[2], pos, faces, "remeshed");
+                var perPart = new List<string>(); for (var p = 0; p < pr.names.Length; p++) perPart.Add($"{{\"name\":\"{pr.names[p]}\",\"faces\":{pr.groupFaceCount[p]}}}");
+                Console.WriteLine($"{{\"parts\":true,\"quads\":{m.quadCount},\"tris\":{m.triangleCount},\"verts\":{pos.Length},\"hash\":\"{m.hash}\",\"perPart\":[{string.Join(",", perPart)}],\"note\":{System.Text.Json.JsonSerializer.Serialize(pr.note)}}}");
                 return 0;
             }
             if (a.Length >= 3 && a[0] == "fbx")      // cli fbx in.obj out.fbx [optionsJson]

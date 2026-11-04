@@ -133,7 +133,7 @@ async function load(files: File[]) {
     slots = { color: [...(unity.embedded?.color ?? [])], normal: [...(unity.embedded?.normal ?? [])] };
     const fileSpace = sourceToUnity(unity);           // sourceToUnity is its own inverse: back to file space for display
     viewer.setSource(fileSpace); paint.setSource(fileSpace.positions); painting = false; viewer.navigation = true; renderSettings();
-    status.textContent = `${imp.name}: ${(unity.positions.length / 3).toLocaleString()} vertices, ${(unity.triangles.length / 3).toLocaleString()} triangles` + (unity.uvs ? ', UVs' : ', no UVs');
+    status.textContent = `${imp.name}: ${(unity.positions.length / 3).toLocaleString()} vertices, ${(unity.triangles.length / 3).toLocaleString()} triangles` + (unity.uvs ? ', UVs' : ', no UVs') + (unity.parts ? `, ${unity.parts.length} parts (${unity.parts.slice(0, 4).map((p) => p.name).join(', ')}${unity.parts.length > 4 ? ', …' : ''})` : '');
     runBtn.disabled = false;
   } catch (e) { status.className = 'err'; status.textContent = `Could not read ${label}: ${(e as Error).message}`; }
 }
@@ -147,6 +147,7 @@ function showSummary(s: RemeshSummary, bootMs: number, wallMs: number) {
     ['Vertices', s.verts.toLocaleString()], ['Solve', (s.totalMs / 1000).toFixed(1) + ' s'], ['Total', (wallMs / 1000).toFixed(1) + ' s (boot ' + bootMs + ' ms)'], ['Result hash', s.hash]];
   const kv = el('div', { class: 'kv' }); rows.forEach(([k, v]) => kv.append(el('b', { textContent: k }), el('span', { textContent: v })));
   results.replaceChildren(el('h2', {}, manifest.sections.find((x) => x.n === 5)!.title), kv);
+  if (s.partsNote) { const n = el('div', { class: 'note', textContent: s.partsNote }); n.style.whiteSpace = 'pre-line'; results.append(n); }
   if (s.bakeNote) results.append(el('div', { class: 'note', textContent: s.bakeNote }));
   for (const [label, m] of [['Baked texture', result?.texture], ['Baked normal map', result?.normalMap]] as const) if (m) results.append(thumb(label, m));
 }

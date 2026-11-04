@@ -40,4 +40,17 @@ describe('unity space', () => {
     const s = sourceToUnity({ positions: Float32Array.from([1, 2, 3, 4, 5, 6, 7, 8, 9]), triangles: Int32Array.from([0, 1, 2]) });
     expect(Array.from(s.positions)).toEqual([-1, 2, 3, -4, 5, 6, -7, 8, 9]); expect(Array.from(s.triangles)).toEqual([0, 2, 1]);
   });
+  it('cuts the model into parts at `o` lines, not at `g` lines, and the writer puts the parts back as objects', () => {
+    const src = 'o a\nv 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\ng sub\nf 1 3 2\no b\nv 5 0 0\nv 6 0 0\nv 5 1 0\nusemtl glassy\nf 4 5 6\n';
+    const m = parseObj(src);
+    expect(m.parts).toEqual([{ name: 'a', first: 0, count: 2 }, { name: 'b', first: 2, count: 1 }]);
+    expect(m.materialGlass).toEqual([true]);
+    const q = { positions: m.positions, faceSizes: Int32Array.from([3, 3, 3]), faceIndices: m.triangles, groups: [{ name: 'a', first: 0, count: 2, kept: false }, { name: 'b', first: 2, count: 1, kept: false }] };
+    const out = writeObj(q, 'x');
+    expect(out.match(/^o /gm)).toHaveLength(2); expect(out).toContain('o b');
+    expect(parseObj(out).parts?.map((p) => p.name)).toEqual(['a', 'b']);
+  });
+  it('a single object is not a model in parts', () => {
+    expect(parseObj('o only\nv 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n').parts).toBeUndefined();
+  });
 });

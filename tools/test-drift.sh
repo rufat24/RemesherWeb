@@ -37,4 +37,13 @@ fresh; sed -i 's/static string MeshSummary(GameObject selected, Mesh mesh)/stati
 fresh; printf 'partial class NativeRemesherWindow { void BrandNew() { Foo.Bar(); } }\n' > "$T/em/NativeRemesherWindow.Extra.cs"; sed -i 's/partial class NativeRemesherWindow {/partial class NativeRemesherWindow : X {/' "$T/em/NativeRemesherWindow.Extra.cs"; eexpect "a new method is caught" 1 "$T/em"
 fresh; sed -i 's/void DrawCountSection()/void DrawCountSectionRenamed()/' "$T/em/NativeRemesherWindow.cs"; eexpect "a renamed/removed member is caught" 1 "$T/em"
 fresh; sed -i 's/Section(2, "How Many Quads"/Section(2, "How Many Quads Now"/' "$T/em/NativeRemesherWindow.cs"; eexpect "a label-only edit in a ui-only member is NOT noise" 0 "$T/em"
+
+# Generated parts port: stale when upstream's parts logic changes, loud when the code a rewrite targets changes
+gexpect() { python3 tools/gen_web_parts.py --check "$3" >"$T/out" 2>&1; rc=$?; [ $rc -ne 0 ] && rc=1
+  if [ "$rc" = "$2" ]; then echo "ok   $1"; else echo "FAIL $1 (exit $rc, wanted $2)"; cat "$T/out"; fail=1; fi; }
+P=upstream/Editor/NativeRemesherWindow.Parts.cs
+gexpect "generated parts port is up to date" 0 $P
+sed 's/public static int retryBudget = 120;/public static int retryBudget = 90;/' $P > "$T/p1.cs"; gexpect "a changed tuning constant makes the generated parts port stale" 1 "$T/p1.cs"
+sed 's/var thinNeed = new int\[n\];/var thinNeed = new int[n]; var extraStep = 1;/' $P > "$T/p2.cs"; gexpect "a new line inside the job lambda makes it stale" 1 "$T/p2.cs"
+sed 's/m_JobStage/m_JobStageRenamed/g' $P > "$T/p3.cs"; gexpect "a renamed identifier the generator rewrites is caught" 1 "$T/p3.cs"
 exit $fail

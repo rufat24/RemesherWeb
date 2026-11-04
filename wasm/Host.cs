@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.Versioning;
 using NativeRemesher.Web;
@@ -42,12 +43,20 @@ namespace NativeRemesher.Wasm
 
         public static void Main() { }
 
+        /// <summary>A JSON string literal (hand-written: the trimmed AOT build has no reflection-based serializer to lean on).</summary>
+        static string Js(string v)
+        {
+            var b = new System.Text.StringBuilder("\"");
+            foreach (var c in v ?? "") { if (c == '"' || c == '\\') b.Append('\\').Append(c); else if (c == '\n') b.Append("\\n"); else if (c < ' ') b.Append("\\u").Append(((int)c).ToString("x4")); else b.Append(c); }
+            return b.Append('"').ToString();
+        }
+
         [JSImport("globalThis.__remeshProgress")]
         static partial void ReportProgress(string stage, double fraction);
 
         /// <summary>Runs one single-mesh job (window's PrepareRun + Solve). Returns a JSON summary; fetch the arrays with the getters.</summary>
         [JSExport]
-        public static string Remesh(double[] positions, int[] triangles, double[] uvs, int[] triangleMaterials, string optionsJson, double[] dabs)
+        public static string Remesh(double[] positions, int[] triangles, double[] uvs, int[] triangleMaterials, string optionsJson, double[] dabs, int[] partRanges, string partInfoJson)
         {
             var p = new Vector3[positions.Length / 3];
             for (var i = 0; i < p.Length; i++) p[i] = new Vector3((float)positions[3 * i], (float)positions[3 * i + 1], (float)positions[3 * i + 2]);
@@ -55,13 +64,35 @@ namespace NativeRemesher.Wasm
             if (uvs != null && uvs.Length == 2 * p.Length) { uv = new Vector2[p.Length]; for (var i = 0; i < uv.Length; i++) uv[i] = new Vector2((float)uvs[2 * i], (float)uvs[2 * i + 1]); }
             if (triangleMaterials != null && triangleMaterials.Length != triangles.Length / 3) triangleMaterials = null;
             s_Last = null;
-            s_Last = WebRemesher.Run(p, triangles, uv, triangleMaterials, RemeshOptions.FromJson(optionsJson), (s, f) => ReportProgress(s, f), dabs, s_Bake);
+            var options = RemeshOptions.FromJson(optionsJson); Action<string, float> progress = (s, f) => ReportProgress(s, f);
+            // A model in parts (the importer's triangle ranges, one per mesh of the file): each part is remeshed on its own, one shared bake (WebParts.Run);
+            // Combine Parts, sewn parts and a model of one part take the single-mesh path, as the window does.
+            WebPartsResult pr = null;
+            if (partRanges != null && partRanges.Length >= 4)
+            {
+                string[] names = null; bool[] seeThrough = null;
+                if (!string.IsNullOrEmpty(partInfoJson))
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(partInfoJson);
+                    names = new List<string>(System.Linq.Enumerable.Select(doc.RootElement.GetProperty("names").EnumerateArray(), e => e.GetString())).ToArray();
+                    seeThrough = new List<bool>(System.Linq.Enumerable.Select(doc.RootElement.GetProperty("seeThrough").EnumerateArray(), e => e.GetBoolean())).ToArray();
+                }
+                pr = WebParts.Run(WebParts.Split(p, triangles, uv, triangleMaterials, partRanges, names, seeThrough, s_Bake), options, progress, dabs, s_Bake);
+            }
+            s_Last = pr != null ? pr.merged : WebRemesher.Run(p, triangles, uv, triangleMaterials, options, progress, dabs, s_Bake);
             s_Bake = new BakeInput();   // inputs are per job
             var r = s_Last;
+            var groups = "[]"; var partsNote = "";
+            if (pr != null)
+            {
+                var g = new List<string>();
+                for (var i = 0; i < pr.names.Length; i++) g.Add("{\"name\":" + Js(pr.names[i]) + ",\"first\":" + pr.groupFaceStart[i] + ",\"count\":" + pr.groupFaceCount[i] + ",\"kept\":" + (pr.parts[i] != null && pr.parts[i].hash == "kept" ? "true" : "false") + "}");
+                groups = "[" + string.Join(",", g) + "]"; partsNote = (pr.note + (string.IsNullOrEmpty(pr.typeNote) ? "" : "\n" + pr.typeNote));
+            }
             return "{\"quads\":" + r.quadCount + ",\"tris\":" + r.triangleCount + ",\"ngons\":" + r.ngonCount + ",\"verts\":" + r.positions.Length / 3 +
                    ",\"hash\":\"" + r.hash + "\",\"totalMs\":" + r.totalMs + ",\"hasUvs\":" + (r.uvs != null ? "true" : "false") + ",\"hasCornerUvs\":" + (r.cornerUvs != null ? "true" : "false") +
                    ",\"textureSize\":" + (r.bakedTexture != null ? r.bakedTextureSize : 0) + ",\"normalMapSize\":" + (r.bakedNormalMap != null ? r.bakedNormalMapSize : 0) +
-                   ",\"bakeNote\":\"" + (r.bakeNote ?? "").Replace("\"", "'") + "\"}";
+                   ",\"bakeNote\":\"" + (r.bakeNote ?? "").Replace("\"", "'") + "\",\"groups\":" + groups + ",\"partsNote\":" + Js(partsNote) + "}";
         }
 
         [JSExport] public static double[] ResultPositions() { var a = s_Last.positions; var d = new double[a.Length]; for (var i = 0; i < a.Length; i++) d[i] = a[i]; return d; }

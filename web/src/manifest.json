@@ -39,10 +39,6 @@
   "range": 3.0
  },
  "pending": [
-  "CombineParts",
-  "HiddenPartsFewer",
-  "SaveAsAsset",
-  "QuadTopology",
   "MakeLods",
   "LodLevels",
   "LodKeep",
@@ -405,6 +401,24 @@
    ],
    "group": "common",
    "disabledWhen": "!bakeTexture && !bakeNormalMap"
+  },
+  {
+   "name": "combineParts",
+   "window": "m_CombineParts",
+   "kind": "bool",
+   "default": false,
+   "label": "Join the parts into one mesh",
+   "tooltip": "Remesh the parts as one object. Off: each part is remeshed on its own and the result keeps the model's hierarchy -- the quads split over the parts, one shared texture and normal map for the whole model.",
+   "group": "common"
+  },
+  {
+   "name": "hiddenPartsFewer",
+   "window": "m_HiddenPartsFewer",
+   "kind": "bool",
+   "default": true,
+   "label": "Fewer quads on parts that cannot be seen",
+   "tooltip": "Split the quads by how much of each part can be seen from outside, not by area alone: a car's cabin, seats, door insides and underfloor tunnel give quads to its body panels. Glass (transparent materials, or named glass or window) does not hide what is behind it.",
+   "group": "common"
   }
  ]
 }
