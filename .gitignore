@@ -5,3 +5,5 @@ upstream/
 bin/
 obj/
 node_modules/
+web/public/wasm/
+web/dist/

@@ -14,6 +14,11 @@ namespace NativeRemesher.Cli
         {
             var mesh = NativeRemesher.Benchmark.ObjReader.Read(path);
             RemeshTopology.ReadMesh(mesh, out var positions, out var triangles, out var uvs, out var sub);
+            if (Environment.GetEnvironmentVariable("CLI_UNITY_SPACE") == "1")   // what the web format layer does to a file (web/src/formats/unity-space.ts)
+            {
+                for (var i = 0; i < positions.Length; i++) positions[i] = new Vector3(-positions[i].x, positions[i].y, positions[i].z);
+                for (var i = 0; i + 2 < triangles.Length; i += 3) (triangles[i + 1], triangles[i + 2]) = (triangles[i + 2], triangles[i + 1]);
+            }
             return WebRemesher.Run(positions, triangles, uvs, sub, RemeshOptions.FromJson(json));
         }
         static string Summary(WebResult r) =>

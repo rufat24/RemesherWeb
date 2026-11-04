@@ -16,7 +16,7 @@ const mesh = parseObj(objPath);
 const DUMP = process.env.DUMP_PREFIX; let jobNo = 0;
 const server = http.createServer((req, res) => {
   const p = decodeURIComponent(req.url.split('?')[0]);
-  const f = p === '/' ? path.join(__dirname, 'index.html') : p === '/product-worker.mjs' ? path.join(__dirname, p.slice(1)) : path.join(root, p);
+  const f = p === '/' ? path.join(__dirname, 'index.html') : p === '/product-worker.mjs' ? path.join(__dirname, '../worker/remesh-worker.mjs') : path.join(root, p);
   if (!fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end(); }
   res.writeHead(200, { 'content-type': mime[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);

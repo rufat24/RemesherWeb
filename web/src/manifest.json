@@ -1,4 +1,25 @@
 {
+ "pending": [
+  "CombineParts",
+  "HiddenPartsFewer",
+  "BakeTexture",
+  "BakeNormalMap",
+  "TextureSize",
+  "SaveAsAsset",
+  "QuadTopology",
+  "MakeLods",
+  "LodLevels",
+  "LodKeep",
+  "LodPixels",
+  "LodOwnTextures",
+  "LodRemesh",
+  "LodAutoQuads",
+  "LodQuads",
+  "LodSettingsVersion",
+  "PaintMode",
+  "BrushSizePercent",
+  "BrushStrength"
+ ],
  "generatedFrom": "upstream/Editor/NativeRemesherWindow*.cs (see upstream.lock)",
  "modelTypes": [
   {
