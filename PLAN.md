@@ -32,9 +32,13 @@ Instead:
    shim holding arrays, or thin edits behind `#if`. Decide in M0 after reading those files.
 3. A **sync script** (like their `tools/sync-headless.sh`) copies `Runtime/` from a pinned commit into
    `core/src/`. The copy is generated and never hand-edited.
-4. Build with the **.NET WebAssembly (`browser-wasm`)** target and call it from JS through
+4. Shim **semantics**, not just names: Unity's approximate `Vector3 ==`, `normalized` returning zero for
+   tiny vectors, `Mathf.Round` behavior, `UnityEngine.Random` (5 uses: check whether seeded, since a
+   different sequence moves the baseline) and the one `UnityEngine.Rendering` use. Implement from Unity's
+   documented behavior; do not paste Unity reference source into this public repo.
+5. Build with the **.NET WebAssembly (`browser-wasm`)** target and call it from JS through
    `[JSExport]` with flat typed arrays: positions `Float32Array`, indices `Uint32Array`, settings as JSON.
-5. Run it inside a **Web Worker**, with progress and cancel.
+6. Run it inside a **Web Worker**, with progress and cancel.
 
 ### Alternatives considered
 
@@ -47,9 +51,25 @@ Instead:
 ## Milestones (each has an exit check)
 
 **M0 — Compile and run outside Unity, on Linux.**
-Install the .NET SDK, create `UnityShim` + `core` + a small CLI that reads OBJ, remeshes, writes OBJ.
-*Exit:* compiles, and the procedural corpus run lands within the baseline tolerance of
-`Benchmarks/baseline.csv`. This is the **go/no-go for the whole plan**.
+Checks, in order:
+1. **Trace what `Editor/NativeRemesherWindow*.cs` (incl. `.Parts.cs`, `QuadSource.cs`) does around
+   `RemeshPipeline`.** The latest commit is about parts being sewn into one surface, and
+   `Benchmark/EditorParity.cs` exists, so the window may do orchestration the pipeline alone does not.
+   Whatever it does outside `Runtime/` must be synced or ported, or web output will not match what the
+   user sees in Unity.
+2. Install the .NET SDK (see risk 1).
+3. Widen the sync beyond `Runtime/`: the gate needs `MeshCorpus`, `MeshMetrics`, `BenchmarkRunner`
+   from `Benchmark/` (they use Unity types too). Confirm `Benchmarks/baseline.csv` actually matches the
+   pinned commit; a stale baseline would fail M0 even if the port is right.
+4. Build `UnityShim` + `core` + a small CLI (OBJ in, remesh, OBJ out).
+
+*Exit:* compiles, and the procedural corpus run lands within the baseline tolerance.
+
+**M0.5 — WASM spike (the real go/no-go, before any web-app work).**
+Run one small procedural case under `browser-wasm` **inside a dedicated Web Worker**, on the pinned .NET
+version. Single-threaded browser-wasm throws on blocking waits (`Task.Wait`, `.Result`, `WaitAll`,
+`SemaphoreSlim.Wait`), and `BackgroundScheduler.cs` has not been read yet. Node alone does not prove the
+Worker path. If this fails, the server-side fallback becomes the plan.
 
 **M1 — WebAssembly build.**
 `browser-wasm` build, `[JSExport]` API, a Node smoke test running the same corpus under WASM.
