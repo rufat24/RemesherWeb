@@ -72,7 +72,7 @@ Conventions in this document:
 | F18 | **Tests.** 38 test files with 250 `[Test]`/`[TestCase]` attributes. Headless/README reports 120 tests: 118 pass, 2 skipped. Six files use `new Mesh()` or `LogAssert`. `BackgroundSchedulerTests` needs real threads. | grep |
 | F19 | **Licences.** Instant Meshes and QuadriFlow are **BSD-3** (per Benchmarks/README), and BSD-3 requires reproducing the notice when distributing binaries. The repo itself has no LICENSE file. | [src Benchmarks/README.md:390-400] |
 | F20 | **Out of the NativeRemesher module.** The **Exoside QuadRemesher bridge** (a commercial engine and "the quality oracle") is outside it, as is `TestMeshSpawner`, which spawns procedural meshes. | [src README.md], [NR/Editor/TestMeshSpawner.cs] |
-| F21 | **Clone and plan state.** The clone is **shallow, with 1 commit**. The desktop effort's `PLAN.md` in the clone (529 lines) is about algorithm work items W0-W5. It contains no move to `native/` or `reference/unity/`. The earlier draft's claim to the contrary is not supported at `8766ead`; it may exist elsewhere (UNVERIFIED). | `git rev-parse --is-shallow-repository`, grep |
+| F21 | **Clone and plan state.** The clone is **shallow, with 1 commit**. The desktop effort's `PLAN.md` in the clone (529 lines) is about algorithm work items W0-W5. It contains no move to `native/` or `reference/unity/`. On `main` at `8766ead` there is no move. A **different branch** of that repo, `claude/gracious-rubin-a2j7mz`, carries a Phase 0 intake `PLAN.md` that suggests `native/` and `reference/unity/` paths; it was written assuming a C++ DLL, before the code was known to be C#, and is not a restructure of `Assets/NativeRemesher`. The desktop effort could still reorganize later, which is why D1 recommends a dedicated upstream repo. | `git rev-parse --is-shallow-repository`, grep |
 | F22 | Debug dumps write files through `System.IO.File`, gated by debug-path statics. They are harmless in WASM, where the virtual filesystem is in memory. | [src Parametrization/*.cs, IntegerGridMap.cs:216] |
 
 ---
@@ -671,7 +671,7 @@ Smaller corrections:
 - No `UnityEngine.Random` is used.
 - The vendored snapshot is committed, with a hash check.
 - The server is demoted to a measured contingency.
-- The claim that desktop restructures into `native/` is not supported by the clone.
+- The claim that desktop restructures into `native/` is not supported on `main`; it appears only as an intake layout on branch `claude/gracious-rubin-a2j7mz` (C++ premise). A future reorganization is possible, hence D1.
 - The test count is stated precisely.
 - Exoside and the sample meshes are scoped.
 
