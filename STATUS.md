@@ -13,7 +13,7 @@ Plan: `PLAN.md`. Measurements and surprises: `docs/findings.md`, `docs/measureme
 | Density paint | brush on the model, more/less detail/erase, Shift/Ctrl/Alt as in Unity; measured about 3x the vertices under the brush |
 | Import | OBJ, GLB/GLTF, STL, PLY, FBX. All five tried on one mesh give the same quad count through the real UI |
 | Export | **FBX written by Unity's own `FbxWriter`** (quads, UVs, normals), OBJ, PLY, OFF (quads kept), STL (triangles) |
-| Changes to the Unity asset are detected | a new/changed window field, a changed default, label or enable rule, a changed `PrepareRun`, any changed or new window method, a changed Runtime API reference. 24 mutation tests prove each check fires (`tools/test-drift.sh`) |
+| Changes to the Unity asset are detected | a new/changed window field, a changed default, label or enable rule, a changed `PrepareRun`, any changed or new window method, a changed Runtime API reference. 16 checks in `tools/test-drift.sh` prove each detector fires on a deliberately drifted copy and stays quiet on the real source (`tools/test-drift.sh`) |
 
 ## Not done yet (the honest list)
 
