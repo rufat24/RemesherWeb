@@ -116,27 +116,83 @@ indices, settings object), progress and cancel, Worker wrapper.
 *Exit:* the corpus under WASM matches M0 within tolerance, **and** a Worker running case A, then B (different
 model type), then A again reproduces a fresh A (guards the static-knob leak).
 
-**M2 — Web app.** Vite + TypeScript + three.js: OBJ/PLY/GLB import, before/after view with quad-edge wireframe,
-parameter panel built from the window's real controls (model type, the static knobs, `RemeshSettings`),
-progress/cancel, OBJ export.
+**M2 — Web app shell (core path).** Vite + TypeScript + three.js; the parameter panel is **generated from the
+parameter manifest** (Section 6), never hand-written; before/after view with quad-edge wireframe;
+progress/cancel; import and export through the format layer (Section 7) for at least OBJ and GLB first.
 *Exit:* load → remesh → view → export in real Chromium (Playwright).
 
-**M3 — Parity and CI.** Port the 120 tests to plain NUnit/xUnit; CI runs unit tests, the baseline gate and
-Playwright on every push.
+**M3 — Feature parity, one group at a time.** Each group starts by reading its window partial and writing a
+short feature spec with a parity checklist, then is built, then gated by a parity test against the Unity result.
+| Group | Source to read first | Notes |
+|---|---|---|
+| 3a Model types, symmetry, material borders, hard-surface / character / scan options | `NativeRemesherWindow.cs` | Mostly settings; falls out of the manifest |
+| 3b Density paint ("Paint Fix Areas") | `NativeRemesherWindow.Paint.cs` (390), `DensityPaint`, `RemeshPaint` | three.js brush on raycast, painted weights passed to `densityPaint` |
+| 3c Parts | `NativeRemesherWindow.Parts.cs` (941), `RibbonParts`, `PartBake`, `QuadSource.cs` | Needs a parts list UI and per-part runs |
+| 3d LOD chain | `NativeRemesherWindow.Lods.cs` (1,070), `LodChain` | Multiple outputs; export as LOD set |
+| 3e Texture, UV and normal-map bake | `TextureBake`, `AttributeTransfer`, window bake block | Heaviest in time and memory; image I/O in the browser; likely the first thing to push to the server host |
+| 3f FBX, materials, textures round-trip | `FbxWriter`, importers | See Section 7 |
+*Exit per group:* its parity test passes (same counts and metrics as Unity within tolerance).
 
-**M4 — Limits and the server decision.** Using M0.5/M1 measurements: set the input-size cap (reuse
-`PreDecimate`, which took the 990k scan from 9 minutes to 6.5 s), decide whether to ship the server host,
-and whether threaded WASM is worth it (needs COOP/COEP headers, so not GitHub Pages).
+**M4 — Parity and CI.** Port the 120 tests to plain NUnit/xUnit; CI runs unit tests, the baseline gate,
+the **drift checks** (Section 6) and Playwright on every push.
 
-**M5 — Deploy.** Static hosting plus README; server host only if M4 says so.
+**M5 — Limits and the server decision.** Using M0.5/M1 measurements: set the input-size cap (reuse `PreDecimate`),
+decide whether the server host ships (almost certainly needed for large scans and texture bake), and whether
+threaded WASM is worth it (needs COOP/COEP headers, so not GitHub Pages).
 
-## 5. Scope
+**M6 — Deploy.** Hosting plus README; server host if M5 says so.
 
-**In (core path):** import → `Solve` with the window's real parameters (model type, symmetry, material
-borders, hard-surface/character/scan options) → result mesh → export OBJ.
-**Out for now, your call (each is real Editor code):** density painting (`DensityPaint`, `RemeshPaint`,
-window Paint 390 lines), LOD chains (Lods 1,070 lines), texture/normal-map bake (`TextureBake`), attribute/UV
-transfer, parts UI (Parts 941 lines), FBX export (`FbxWriter`).
+## 5. Scope: everything
+
+**All Unity features are in scope:** model types, symmetry, material borders, density paint, parts, LOD chains,
+texture / UV / normal-map bake, hard-surface / character / scan options, FBX export. M3 sequences them; none
+is dropped. Import and export cover every format with a maintained library (Section 7).
+
+## 6. Keeping the web version in step with the Unity asset
+
+This is a design requirement, not a nicety. Rules and machinery:
+
+1. **Never edit synced code.** `core/src/` is generated from `RemesherDektop@UPSTREAM_SHA` by `sync/`, kept out of git
+   (the same reasoning as their own `Headless/` mirror: two copies free to drift is worse than none). Only the
+   one-line file `UPSTREAM_SHA` is committed. Everything web-specific lives in `shim/`, the facade and `patches/`.
+2. **If the web build needs a source change,** it is a numbered `patches/*.patch` applied during sync. CI fails
+   loudly the moment a patch no longer applies, so an upstream change can never be silently overwritten.
+   The cleaner alternative is making the change upstream (e.g. an `#if` or a hook); that is your call.
+3. **Nightly upgrade bot.** A scheduled GitHub Action fetches the upstream `main` (sparse, `Assets/NativeRemesher`
+   only), and if it is newer than `UPSTREAM_SHA`: syncs, builds, runs the tests and baseline gate, and opens a PR
+   titled with the commits it pulls in. Green means "merge and ship"; red names the new Unity API to shim or the
+   knob to expose.
+4. **Drift checks that fail the build** (so nothing upstream is ever missed silently):
+   - **Shim coverage:** the compile against the shim must have zero CS0246/CS0103 errors.
+   - **Static-knob census:** reflect over every public static on `RemeshPipeline` (and the other runtime
+     statics the window sets) and compare with the parameter manifest. A new upstream knob not in the manifest
+     fails CI.
+   - **Settings census:** same for the fields of `RemeshSettings` and `RemeshProfile`.
+   - **Baseline gate:** the web CLI output against upstream `Benchmarks/baseline.csv` at the new SHA.
+5. **The parameter manifest** (`manifest.json`: name, type, range, default, tooltip, group, enabled-when) drives the
+   UI and the facade. The window's controls (`m_*` fields, `[Tooltip]`s, `GUILayout` labels) are the source of
+   truth. First version: written from the window by hand with the census tests above guarding it. **Recommended
+   upstream change (your call, in the Unity repo):** move the window's orchestration (the ~20-knob block and the
+   per-feature option sets) from `Editor/` into a `Runtime/` options type that the window and the web both call.
+   Then there is one place to change, and the manifest can be generated from it. Until then, the window's
+   orchestration is mirrored in the facade and watched by the census.
+6. **UI is re-implemented, not synced.** The Unity window is IMGUI (about 4,500 lines) and cannot be
+   mechanically ported. The manifest keeps that re-implementation thin and checkable.
+
+## 7. Import and export: every format
+
+A **format layer** (`web/formats/`) converts any file to the core's input contract (positions, triangle indices,
+optional `triangleMaterials` and `sourceUvs`, plus textures) and the polygon result back out.
+
+| | Formats | How |
+|---|---|---|
+| **Import** | OBJ (+MTL), PLY, STL, GLB/glTF, FBX (ASCII and binary), DAE, 3MF, OFF, VRML/X3D, USD(Z), and more | three.js loaders for the common ones. **Assimp compiled to WASM** (BSD-licensed `assimpjs`-style) as the catch-all for the long tail (40+ formats). Pick per format in M2/M3f. |
+| **Export** | OBJ, PLY, STL, GLB/glTF, FBX, DAE, USDZ | OBJ/PLY/FBX **keep quads** (FBX via the repo's own C# `FbxWriter`, which also keeps parity with Unity). STL and glTF are triangle-only formats, so those export triangulated and say so. Others via three.js exporters or Assimp. |
+
+Honest limits: "any format" means every format a maintained library handles; proprietary CAD formats (STEP, Maya `.ma`,
+Blender `.blend`, …) need a converter and are out unless you name them. Large FBX/scan files hit the same memory
+ceiling as the remesher (M5). Each format gets a round-trip test (import → export → re-import, counts and bounds equal,
+quads preserved where the format allows).
 
 ## 6. Open items (unverified — do not assume)
 
@@ -147,17 +203,19 @@ transfer, parts UI (Parts 941 lines), FBX export (`FbxWriter`).
    metric tolerance in `baseline.csv`, never bit-exact output.
 4. **Static mutable knobs** leak between runs unless the facade snapshots and restores them (M0, tested in M1).
 5. **Tier-2 corpus** (real scans) is not in the repo, so real-world parity is limited to what you can supply.
-6. **Which Editor features** you want on the web (Section 5).
 
 ## 7. Repo layout
 
 ```
-sync/    copies Runtime/ (+ needed Benchmark files) from the pinned RemesherDektop commit; read-only
+sync/    copies Runtime/ (+ needed Benchmark files) from RemesherDektop@UPSTREAM_SHA; read-only
+patches/ numbered patches applied during sync (CI fails if one stops applying)
+manifest/ parameter manifest + census tests
+.github/ CI, nightly upstream-upgrade bot
 shim/    UnityShim: Vector3, Mathf, Matrix4x4, ...
 core/    generated src copy + adapters (+ browser BackgroundScheduler variant)
 cli/     OBJ in, OBJ out; drives the parity gate
 wasm/    browser-wasm AOT project + JSExport API
-web/     Vite app, Web Worker, three.js
+web/     Vite app, Web Worker, three.js, formats/ (import/export layer)
 server/  optional .NET host (M4 decision)
 tests/   ported unit tests, baseline gate, Playwright specs
 ```
