@@ -25,6 +25,8 @@ namespace NativeRemesher.Web
     public static class WebRemesher
     {
         static StaticsSnapshot s_Snapshot;
+        /// <summary>Test hook only: the A/B/A negative control turns the restore off to prove the test can fail.</summary>
+        public static bool DisableStaticsRestore;
 
         /// <summary>Call once at host startup, before any job: captures the pristine statics.</summary>
         public static void Init() { s_Snapshot ??= StaticsSnapshot.Capture(typeof(RemeshPipeline).Assembly); }
@@ -33,10 +35,14 @@ namespace NativeRemesher.Web
                                     RemeshOptions o, Action<string, float> progress = null)
         {
             Init();
-            s_Snapshot.Restore();                 // jobs must not inherit each other's statics
+            if (!DisableStaticsRestore) s_Snapshot.Restore();                 // jobs must not inherit each other's statics
             var settings = Prepare(o, out var profile, out var autoProfile);
-            var solved = RemeshPipeline.Solve(positions, triangles, settings, profile, progress, sourceUvs, autoProfile, triangleMaterials);
-            return ToResult(solved);
+            // Solve's Parallel.For resolves its scheduler from TaskScheduler.Current, so the solve runs as a task on the inline
+            // scheduler: parallelism 1 on one thread, and no thread-pool dependency in the single-threaded browser build.
+            var task = new System.Threading.Tasks.Task<RemeshResult>(() =>
+                RemeshPipeline.Solve(positions, triangles, settings, profile, progress, sourceUvs, autoProfile, triangleMaterials));
+            task.RunSynchronously(new NativeRemesher.Host.InlineScheduler());
+            return ToResult(task.GetAwaiter().GetResult());
         }
 
         /// <summary>NativeRemesherWindow.PrepareRun, lines 836-891.</summary>
