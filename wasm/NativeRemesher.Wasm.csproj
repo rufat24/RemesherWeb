@@ -18,6 +18,7 @@
          operators sit under every inner loop (profile: 44% in PositionField.Compat plus ~20% in non-inlined Vector3 calls). -->
     <Compile Include="../upstream/Runtime/**/*.cs" Exclude="../upstream/Runtime/RemeshPaint.cs;../upstream/Runtime/RemeshSource.cs" />
     <Compile Include="../shim/*.cs" />
+    <Compile Include="../orchestration/*.cs" />
     <!-- Corpus builders (MeshCorpus etc.) come from upstream/Benchmark, compiled unchanged. -->
     <Compile Include="../upstream/Benchmark/MeshCorpus.cs;../upstream/Benchmark/MeshMetrics.cs;../upstream/Benchmark/PolyMesh.cs;../upstream/Benchmark/BenchmarkReport.cs;../upstream/Benchmark/FieldDiagnostics.cs;../upstream/Benchmark/IntegerGridAudit.cs;../upstream/Benchmark/ObjReader.cs;../upstream/Benchmark/ObjWriter.cs" />
   </ItemGroup>
