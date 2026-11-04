@@ -25,8 +25,8 @@ if m: labels['Symmetry'] = ('Mirrored', strs(m.group(1)))
 # --- window fields (type, default) and which are covered by RemeshOptions
 sys.path.insert(0, str(root / 'tools'))
 fields = []
-for m in re.finditer(r'public\s+([\w.]+)\s+(\w+)\s*=\s*([^;]+);\s*//\s*m_(\w+)', opt):
-    t, n, v, w = m.groups()
+for m in re.finditer(r'public\s+([\w.]+)\s+(\w+)\s*=\s*([^;]+);[ \t]*(?://[ \t]*m_(\w+))?', opt):
+    t, n, v, w = m.groups(); w = w or n[0].upper() + n[1:]
     kind = {'bool': 'bool', 'int': 'int', 'float': 'float'}.get(t, 'enum')
     default = {'true': True, 'false': False}.get(v.strip(), None)
     if default is None:

@@ -6,8 +6,8 @@ import { startRemesh, type RemeshJob, type RemeshSummary } from './remesh-client
 import { Viewer } from './viewer';
 import { PaintState, type PaintMode } from './paint';
 
-type Field = (typeof manifest.fields)[number] & { options?: { value: string; label: string }[]; min?: number; max?: number; step?: number; disabledWhen?: string };
-const fields = manifest.fields as Field[];
+interface Field { name: string; window: string; kind: string; default: unknown; label?: string; tooltip?: string; group: string; enum?: string; options?: { value: string; label: string }[]; min?: number; max?: number; step?: number; disabledWhen?: string }
+const fields = manifest.fields as unknown as Field[];
 const opts: Record<string, string | number | boolean> = Object.fromEntries(fields.map((f) => [f.name, f.default as string | number | boolean]));
 
 const panel = document.getElementById('panel')!;

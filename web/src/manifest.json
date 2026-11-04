@@ -109,6 +109,14 @@
  ],
  "fields": [
   {
+   "name": "modelType",
+   "window": "m_ModelType",
+   "kind": "enum",
+   "default": "Auto",
+   "enum": "ModelType",
+   "group": "common"
+  },
+  {
    "name": "roundParts",
    "window": "m_RoundParts",
    "kind": "bool",
