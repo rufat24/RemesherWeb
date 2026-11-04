@@ -42,3 +42,11 @@ The web format layer therefore converts on import and back on export (`web/src/f
 
 `web/e2e/e2e.cjs` drives the built UI in headless Chromium: file input -> Remesh -> result summary -> Download OBJ. cube_subdivided, default options:
 5162 quads, 0 page errors, the exported OBJ has 5162 faces, all quads, and passes `compare_obj.py` against the CLI result.
+
+## 8. Import formats through the real UI (advisor check)
+
+The same mesh (cube_subdivided, 12,288 triangles) as OBJ, binary STL (every triangle its own three vertices), indexed GLB, GLB with three
+vertices per triangle (what a seam-split exporter writes) and binary PLY: all five import, remesh and export **5162 quads with 0 page errors**
+(`web/e2e/run-formats.sh`). STL and the split GLB give the very same result hash as the OBJ, because the core welds by position; the indexed GLB and PLY keep
+the file's vertex numbering and give another hash with the same face count (vertex order is an input to a chaotic pipeline).
+Not yet exercised: FBX import (three's FBXLoader; needs a fixture), UVs and materials through GLB/FBX, textures.
