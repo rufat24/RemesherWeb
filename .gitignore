@@ -1,0 +1,7 @@
+# upstream/ is a copy of the Unity project's C# sources. It stays OUT of git until decision D4
+# (license and visibility of this public repo) is made. Regenerate with:
+#   tools/sync-upstream.sh --from-path <clone of RemesherDektop>
+upstream/
+bin/
+obj/
+node_modules/
