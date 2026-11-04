@@ -13,6 +13,7 @@ function parseObj(file) {
   return { positions: pos, triangles: tri };
 }
 const mesh = parseObj(objPath);
+const DUMP = process.env.DUMP_PREFIX; let jobNo = 0;
 const server = http.createServer((req, res) => {
   const p = decodeURIComponent(req.url.split('?')[0]);
   const f = p === '/' ? path.join(__dirname, 'index.html') : p === '/product-worker.mjs' ? path.join(__dirname, p.slice(1)) : path.join(root, p);
@@ -27,10 +28,16 @@ const server = http.createServer((req, res) => {
   for (const o of optSets) {
     const out = await page.evaluate(([m, opts]) => new Promise((resolve, reject) => {
       const w = new Worker('/product-worker.mjs', { type: 'module' }); let progress = 0;
-      w.onmessage = e => { if (e.data.type === 'progress') progress++; else { w.terminate(); resolve({ ...e.data, progressEvents: progress }); } };
+      w.onmessage = e => { if (e.data.type === 'progress') progress++; else { w.terminate(); const d = e.data; resolve({ ...d, progressEvents: progress, positions: d.positions && Array.from(d.positions), faceSizes: d.faceSizes && Array.from(d.faceSizes), faceIndices: d.faceIndices && Array.from(d.faceIndices) }); } };
       w.onerror = e => reject(new Error('worker error: ' + e.message));
       w.postMessage({ type: 'start', positions: new Float64Array(m.positions), triangles: new Int32Array(m.triangles), options: JSON.parse(opts) });
     }), [mesh, o]);
+    if (DUMP && out.positions) {
+      const L = []; for (let i = 0; i < out.positions.length; i += 3) L.push('v ' + out.positions[i] + ' ' + out.positions[i + 1] + ' ' + out.positions[i + 2]);
+      let k = 0; for (const n of out.faceSizes) { L.push('f ' + out.faceIndices.slice(k, k + n).map(x => x + 1).join(' ')); k += n; }
+      fs.writeFileSync(DUMP + (jobNo) + '.obj', L.join('\n') + '\n');
+    }
+    jobNo++;
     console.log(JSON.stringify({ options: o, type: out.type, message: out.message, summary: out.summary, bootMs: out.bootMs, progressEvents: out.progressEvents,
       outVerts: out.positions && out.positions.length / 3, outFaces: out.faceSizes && out.faceSizes.length }));
   }
