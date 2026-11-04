@@ -33,17 +33,28 @@ namespace NativeRemesher.Web
         public static void Init() { s_Snapshot ??= StaticsSnapshot.Capture(typeof(RemeshPipeline).Assembly); }
 
         public static WebResult Run(Vector3[] positions, int[] triangles, Vector2[] sourceUvs, int[] triangleMaterials,
-                                    RemeshOptions o, Action<string, float> progress = null)
+                                    RemeshOptions o, Action<string, float> progress = null, double[] dabs = null)
         {
             Init();
             if (!DisableStaticsRestore) s_Snapshot.Restore();                 // jobs must not inherit each other's statics
             var settings = Prepare(o, out var profile, out var autoProfile);
+            settings.densityPaint = PaintFrom(dabs);   // RunSingle: settings.densityPaint = PaintFor(selected) (null when nothing is painted)
             // Solve's Parallel.For resolves its scheduler from TaskScheduler.Current, so the solve runs as a task on the inline
             // scheduler: parallelism 1 on one thread, and no thread-pool dependency in the single-threaded browser build.
             var task = new System.Threading.Tasks.Task<RemeshResult>(() =>
                 RemeshPipeline.Solve(positions, triangles, settings, profile, progress, sourceUvs, autoProfile, triangleMaterials));
             task.RunSynchronously(new NativeRemesher.Host.InlineScheduler());
             return ToResult(task.GetAwaiter().GetResult());
+        }
+
+        /// <summary>The painted dabs (x, y, z, radius, strength per dab, in the source mesh's own space) as the core's DensityPaint; null when empty.</summary>
+        public static DensityPaint PaintFrom(double[] dabs)
+        {
+            if (dabs == null || dabs.Length < 5) return null;
+            var paint = new DensityPaint();
+            for (var i = 0; i + 4 < dabs.Length; i += 5)
+                paint.dabs.Add(new DensityPaint.Dab { centre = new Vector3((float)dabs[i], (float)dabs[i + 1], (float)dabs[i + 2]), radius = (float)dabs[i + 3], strength = (float)dabs[i + 4] });
+            return paint.isEmpty ? null : paint;
         }
 
         /// <summary>NativeRemesherWindow.PrepareRun, lines 836-891.</summary>

@@ -20,7 +20,7 @@ namespace NativeRemesher.Wasm
 
         /// <summary>Runs one single-mesh job (window's PrepareRun + Solve). Returns a JSON summary; fetch the arrays with the getters.</summary>
         [JSExport]
-        public static string Remesh(double[] positions, int[] triangles, double[] uvs, int[] triangleMaterials, string optionsJson)
+        public static string Remesh(double[] positions, int[] triangles, double[] uvs, int[] triangleMaterials, string optionsJson, double[] dabs)
         {
             var p = new Vector3[positions.Length / 3];
             for (var i = 0; i < p.Length; i++) p[i] = new Vector3((float)positions[3 * i], (float)positions[3 * i + 1], (float)positions[3 * i + 2]);
@@ -28,7 +28,7 @@ namespace NativeRemesher.Wasm
             if (uvs != null && uvs.Length == 2 * p.Length) { uv = new Vector2[p.Length]; for (var i = 0; i < uv.Length; i++) uv[i] = new Vector2((float)uvs[2 * i], (float)uvs[2 * i + 1]); }
             if (triangleMaterials != null && triangleMaterials.Length != triangles.Length / 3) triangleMaterials = null;
             s_Last = null;
-            s_Last = WebRemesher.Run(p, triangles, uv, triangleMaterials, RemeshOptions.FromJson(optionsJson), (s, f) => ReportProgress(s, f));
+            s_Last = WebRemesher.Run(p, triangles, uv, triangleMaterials, RemeshOptions.FromJson(optionsJson), (s, f) => ReportProgress(s, f), dabs);
             var r = s_Last;
             return "{\"quads\":" + r.quadCount + ",\"tris\":" + r.triangleCount + ",\"ngons\":" + r.ngonCount + ",\"verts\":" + r.positions.Length / 3 +
                    ",\"hash\":\"" + r.hash + "\",\"totalMs\":" + r.totalMs + ",\"hasUvs\":" + (r.uvs != null ? "true" : "false") + "}";

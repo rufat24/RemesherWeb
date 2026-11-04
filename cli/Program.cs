@@ -19,7 +19,10 @@ namespace NativeRemesher.Cli
                 for (var i = 0; i < positions.Length; i++) positions[i] = new Vector3(-positions[i].x, positions[i].y, positions[i].z);
                 for (var i = 0; i + 2 < triangles.Length; i += 3) (triangles[i + 1], triangles[i + 2]) = (triangles[i + 2], triangles[i + 1]);
             }
-            return WebRemesher.Run(positions, triangles, uvs, sub, RemeshOptions.FromJson(json));
+            double[] dabs = null;   // CLI_DABS="x,y,z,r,s;x,y,z,r,s" in the source's own (Unity) space, for paint parity tests
+            var env = Environment.GetEnvironmentVariable("CLI_DABS");
+            if (!string.IsNullOrEmpty(env)) { var l = new List<double>(); foreach (var d in env.Split(';')) foreach (var n in d.Split(',')) l.Add(double.Parse(n, System.Globalization.CultureInfo.InvariantCulture)); dabs = l.ToArray(); }
+            return WebRemesher.Run(positions, triangles, uvs, sub, RemeshOptions.FromJson(json), null, dabs);
         }
         static string Summary(WebResult r) =>
             $"{{\"quads\":{r.quadCount},\"tris\":{r.triangleCount},\"ngons\":{r.ngonCount},\"verts\":{r.positions.Length / 3},\"hash\":\"{r.hash}\",\"totalMs\":{r.totalMs}}}";
