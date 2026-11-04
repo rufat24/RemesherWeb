@@ -4,6 +4,7 @@ import { quadMeshFromUnity, sourceToUnity } from './formats/unity-space';
 import type { QuadMesh, SourceMesh } from './formats/mesh';
 import { startRemesh, type RemeshJob, type RemeshSummary } from './remesh-client';
 import { Viewer } from './viewer';
+import { PaintState, type PaintMode } from './paint';
 
 type Field = (typeof manifest.fields)[number] & { options?: { value: string; label: string }[]; min?: number; max?: number; step?: number; disabledWhen?: string };
 const fields = manifest.fields as Field[];
@@ -11,6 +12,7 @@ const opts: Record<string, string | number | boolean> = Object.fromEntries(field
 
 const panel = document.getElementById('panel')!;
 const viewer = new Viewer(document.getElementById('view')!);
+const paint = new PaintState(); let painting = false;
 let source: SourceMesh | null = null, sourceName = 'model', result: QuadMesh | null = null, job: RemeshJob | null = null;
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, props: Partial<HTMLElementTagNameMap[K]> & { class?: string } = {}, ...kids: (Node | string)[]) => {
@@ -47,7 +49,39 @@ function renderSettings() {
   }
   settings.append(sec(2)); for (const n of ['targetQuadCount', 'curvesAddQuads', 'curveDetail']) settings.append(control(fields.find((f) => f.name === n)!));
   settings.append(sec(3)); for (const n of ['longCreaseLoops', 'materialBorders', 'symmetry']) settings.append(control(fields.find((f) => f.name === n)!));
+  settings.append(sec(4), paintPanel());
 }
+
+const P = manifest.paint;
+function paintPanel(): HTMLElement {
+  const box = el('div'); box.append(el('div', { class: 'note', textContent: P.intro! }));
+  const t = el('button', { textContent: painting ? P.stopLabel! : P.startLabel!, className: painting ? 'on' : '', title: P.tooltip!, disabled: !source, onclick: () => setPainting(!painting) });
+  t.style.width = '100%'; box.append(t);
+  if (painting) {
+    const seg = el('div', { class: 'seg' }); P.modes.forEach((m) => seg.append(el('button', { textContent: m.label, className: paint.mode === m.value ? 'on' : '', onclick: () => { paint.mode = m.value as PaintMode; renderSettings(); } })));
+    const slider = (c: NonNullable<typeof P.size>, get: () => number, set: (v: number) => void) => {
+      const val = el('span', { textContent: String(get()) }); const i = el('input', { type: 'range', min: String(c.min), max: String(c.max), step: String(c.min), value: String(get()) });
+      i.oninput = () => { set(Number(i.value)); val.textContent = i.value; }; return el('label', { class: 'row', title: c.tooltip }, c.label, i, val);
+    };
+    box.append(seg, slider(P.size!, () => paint.sizePercent, (v) => (paint.sizePercent = v)), slider(P.strength!, () => paint.strength, (v) => (paint.strength = v)), el('div', { class: 'note', textContent: P.help! }));
+  }
+  if (paint.dabs.length) box.append(el('div', { class: 'seg' }, el('span', { class: 'note', textContent: `${paint.dabs.length.toLocaleString()} dabs painted` }), el('button', { textContent: 'Clear Paint', onclick: () => { paint.clear(); renderSettings(); } })));
+  return box;
+}
+function setPainting(on: boolean) { painting = on; viewer.navigation = true; viewer.showSource(true); (document.getElementById('vsrc') as HTMLInputElement).checked = true; renderSettings(); }
+paint.onChange = () => viewer.setSourceColors(paint.colors());
+// Painting: left-drag paints, Alt-drag (or the other buttons) still orbit; Shift erases, Ctrl paints Less Detail; Esc stops. As in the window.
+let stroke = false;
+viewer.dom.addEventListener('pointerdown', (e) => {
+  if (!painting || e.button !== 0 || e.altKey) return;
+  viewer.navigation = false; stroke = true; viewer.dom.setPointerCapture(e.pointerId); dab(e);
+});
+viewer.dom.addEventListener('pointermove', (e) => { if (painting && stroke) dab(e); });
+const endStroke = () => { if (!stroke) return; stroke = false; paint.endStroke(); viewer.navigation = true; renderSettings(); };
+viewer.dom.addEventListener('pointerup', endStroke); viewer.dom.addEventListener('pointercancel', endStroke);
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && painting) setPainting(false); });
+function dab(e: PointerEvent) { const hit = viewer.pickSource(e); if (hit) paint.apply(hit, e.shiftKey ? 'Erase' : e.ctrlKey ? 'LessDetail' : paint.mode); }
+
 
 function control(f: Field): HTMLElement {
   const off = disabled(f); const tip = f.tooltip ?? '';
@@ -73,7 +107,8 @@ async function load(file: File) {
   try {
     const unity = await importFile(file.name, await file.arrayBuffer());
     source = unity; sourceName = file.name.replace(/\.[^.]+$/, ''); result = null; exportBtn.disabled = true; results.replaceChildren();
-    viewer.setSource(sourceToUnity(unity));           // sourceToUnity is its own inverse: back to file space for display
+    const fileSpace = sourceToUnity(unity);           // sourceToUnity is its own inverse: back to file space for display
+    viewer.setSource(fileSpace); paint.setSource(fileSpace.positions); painting = false; viewer.navigation = true; renderSettings();
     status.textContent = `${file.name}: ${(unity.positions.length / 3).toLocaleString()} vertices, ${(unity.triangles.length / 3).toLocaleString()} triangles`;
     runBtn.disabled = false;
   } catch (e) { status.className = 'err'; status.textContent = `Could not read ${file.name}: ${(e as Error).message}`; }
@@ -93,7 +128,7 @@ runBtn.onclick = async () => {
   if (!source) return;
   runBtn.hidden = true; cancelBtn.hidden = false; bar.hidden = false; bar.value = 0; status.className = 'note'; status.textContent = 'Starting…';
   const t0 = performance.now(); const o = Object.fromEntries(fields.map((f) => [f.name, opts[f.name]]));
-  job = startRemesh(source, o, (stage, fraction) => { bar.value = fraction; status.textContent = stage; });
+  job = startRemesh(source, o, (stage, fraction) => { bar.value = fraction; status.textContent = stage; }, sourceName + '_remeshed', paint.toArray());
   try {
     const out = await job.promise; result = out.mesh; viewer.setResult(quadMeshFromUnity(out.mesh)); exportBtn.disabled = false; (document.getElementById('vsrc') as HTMLInputElement).checked = false;
     status.textContent = 'Done.'; showSummary(out.summary, out.bootMs, performance.now() - t0);

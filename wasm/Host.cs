@@ -35,6 +35,7 @@ namespace NativeRemesher.Wasm
         }
 
         [JSExport] public static double[] ResultPositions() { var a = s_Last.positions; var d = new double[a.Length]; for (var i = 0; i < a.Length; i++) d[i] = a[i]; return d; }
+        [JSExport] public static byte[] ResultFbx(string name) => WebRemesher.ToFbx(s_Last, name);
         [JSExport] public static int[] ResultFaceSizes() => s_Last.faceSizes;
         [JSExport] public static int[] ResultFaceIndices() => s_Last.faceIndices;
         [JSExport] public static int[] ResultFaceMaterials() => s_Last.faceMaterials;

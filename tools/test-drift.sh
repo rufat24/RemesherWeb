@@ -14,6 +14,7 @@ expect "real source passes" 0 "$T/real.cs"
 sed 's/bool m_HardRods = true;/bool m_HardRods = false;/' "$T/real.cs" > "$T/m1.cs";   expect "changed default is caught" 1 "$T/m1.cs"
 sed 's/\[SerializeField\] bool m_MaterialBorders;/[SerializeField] bool m_MaterialBorders;\n[SerializeField] bool m_BrandNewOption = true;/' "$T/real.cs" > "$T/m2.cs"; expect "new field is caught" 1 "$T/m2.cs"
 sed 's/m_ScanShapeRegions/m_ScanShapeRegionsRenamed/g' "$T/real.cs" > "$T/m3.cs";  expect "renamed field is caught" 1 "$T/m3.cs"
+sed 's/m_BrushStrength = 0.5f;/m_BrushStrength = 0.7f;/' "$T/real.cs" > "$T/m5.cs"; expect "changed web-ui default (paint strength) is caught" 1 "$T/m5.cs"
 sed 's/\[SerializeField\] int m_TargetQuadCount = 2000;/[SerializeField] int m_TargetQuadCount = 3000;/' "$T/real.cs" > "$T/m4.cs"; expect "changed int default is caught" 1 "$T/m4.cs"
 
 # manifest: stale or unlabeled controls

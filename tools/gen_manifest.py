@@ -62,8 +62,26 @@ sections = sorted([{'n': int(a), 'title': b} for a, b in set(re.findall(r'Sectio
 errors = [f"control {f['name']} ({f['window']}) has no label in the window source" for f in fields if 'label' not in f and f['name'] != 'modelType']
 errors += [f'window no longer contains {n}' for n in needed if n not in src]
 if len(type_notes) != len(model_types): errors.append(f'type notes ({len(type_notes)}) != model types ({len(model_types)})')
+# --- density paint panel (NativeRemesherWindow.Paint.cs DrawPaintGUI) and the core's range (DensityPaint.cs)
+psrc = (wdir / 'NativeRemesherWindow.Paint.cs').read_text()
+rsrc = (wdir.parent / 'Runtime/DensityPaint.cs').read_text() if (wdir.parent / 'Runtime/DensityPaint.cs').exists() else ''
+def sl(field):
+    m = re.search(r'm_' + field + r'\s*=\s*EditorGUILayout\.Slider\(\s*new GUIContent\("([^"]*)",\s*((?:"(?:[^"\\]|\\.)*"\s*\+?\s*)+)\),\s*m_' + field + r',\s*([\d.]+)f,\s*([\d.]+)f', psrc)
+    return {'label': m.group(1), 'tooltip': strs(m.group(2)), 'min': float(m.group(3)), 'max': float(m.group(4))} if m else None
+tg = re.search(r'new GUIContent\(m_Painting \? "([^"]*)" : "([^"]*)",\s*((?:"(?:[^"\\]|\\.)*"\s*\+?\s*|DensityPaint\.range\.ToString\("0\.#"\)\s*\+?\s*)+)\)', psrc)
+modes = re.search(r'Toolbar\(\(int\)m_PaintMode,\s*new\[\]\s*\{([^}]*)\}', psrc)
+intro = re.search(r'LabelField\(((?:"(?:[^"\\]|\\.)*"\s*\+?\s*)+),\s*EditorStyles\.wordWrappedMiniLabel\)', psrc)
+helpb = re.search(r'HelpBox\(((?:"(?:[^"\\]|\\.)*"\s*\+?\s*)+),', psrc)
+rng = re.search(r'public static float range = ([\d.]+)f;', rsrc)
+paint = {'intro': strs(intro.group(1)) if intro else None, 'startLabel': tg.group(2) if tg else None, 'stopLabel': tg.group(1) if tg else None,
+         'tooltip': strs(tg.group(3).replace('DensityPaint.range.ToString("0.#")', '"' + (rng.group(1).rstrip('0').rstrip('.') if rng else '?') + '"')) if tg else None,
+         'modes': [{'value': v, 'label': l} for v, l in zip(['MoreDetail', 'LessDetail', 'Erase'], re.findall(r'"([^"]*)"', modes.group(1)) if modes else [])],
+         'size': sl('BrushSizePercent'), 'strength': sl('BrushStrength'), 'help': strs(helpb.group(1)) if helpb else None,
+         'defaults': {'mode': 'MoreDetail', 'size': 3.0, 'strength': 0.5}, 'range': float(rng.group(1)) if rng else None}
+for k in ('intro', 'startLabel', 'tooltip', 'modes', 'size', 'strength', 'help', 'range'):
+    if not paint.get(k): errors.append(f'paint panel: could not read {k} from the window source')
 pending = json.loads((root / 'census/window-fields-pending.json').read_text())['pending']
-manifest = {'pending': pending, 'generatedFrom': 'upstream/Editor/NativeRemesherWindow*.cs (see upstream.lock)', 'modelTypes': model_types, 'typeNotes': type_notes,
+manifest = {'paint': paint, 'pending': pending, 'generatedFrom': 'upstream/Editor/NativeRemesherWindow*.cs (see upstream.lock)', 'modelTypes': model_types, 'typeNotes': type_notes,
             'sections': sections, 'fields': fields}
 out = json.dumps(manifest, indent=1, ensure_ascii=False) + '\n'
 dest = root / 'web/src/manifest.json'

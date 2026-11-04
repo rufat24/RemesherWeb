@@ -6,8 +6,9 @@ import { quadMeshFromUnity } from './unity-space';
 import { triangulate } from './mesh';
 
 export const IMPORT_EXTENSIONS = ['obj', 'glb', 'gltf', 'stl', 'ply', 'fbx'];
-export type ExportFormat = 'obj' | 'ply' | 'stl' | 'off';
+export type ExportFormat = 'obj' | 'ply' | 'stl' | 'off' | 'fbx';
 export const EXPORT_FORMATS: { id: ExportFormat; label: string; keepsQuads: boolean }[] = [
+  { id: 'fbx', label: 'FBX (quads kept, UVs, normals)', keepsQuads: true },
   { id: 'obj', label: 'OBJ (quads kept)', keepsQuads: true },
   { id: 'ply', label: 'PLY (quads kept)', keepsQuads: true },
   { id: 'off', label: 'OFF (quads kept)', keepsQuads: true },
@@ -23,6 +24,7 @@ export async function importFile(name: string, data: ArrayBuffer): Promise<Sourc
 
 /** The core's result (Unity space) -> file bytes. */
 export function exportMesh(unityMesh: QuadMesh, format: ExportFormat, name = 'remeshed'): Blob {
+  if (format === 'fbx') { if (!unityMesh.fbx) throw new Error('This result carries no FBX'); return new Blob([unityMesh.fbx as BlobPart], { type: 'application/octet-stream' }); }
   const m = quadMeshFromUnity(unityMesh);
   switch (format) {
     case 'obj': return new Blob([writeObj(m, name)], { type: 'text/plain' });

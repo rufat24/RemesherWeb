@@ -1,4 +1,43 @@
 {
+ "paint": {
+  "intro": "Brush over what came out wrong, then remesh again: painted areas get smaller quads.",
+  "startLabel": "Paint Fix Areas",
+  "stopLabel": "Stop Painting",
+  "tooltip": "Brush over the parts that came out wrong -- a rim, a strap, a buckle -- in the Scene view, on the result or on the source, then press Remesh again: painted areas get smaller quads (up to 3x finer) and the target grows by what they add. Less Detail paints the other way.",
+  "modes": [
+   {
+    "value": "MoreDetail",
+    "label": "More Detail"
+   },
+   {
+    "value": "LessDetail",
+    "label": "Less Detail"
+   },
+   {
+    "value": "Erase",
+    "label": "Erase"
+   }
+  ],
+  "size": {
+   "label": "Brush Size %",
+   "tooltip": "Radius, as a percentage of the object's size.",
+   "min": 0.25,
+   "max": 25.0
+  },
+  "strength": {
+   "label": "Strength",
+   "tooltip": "How much one pass adds. Strokes add up to full strength.",
+   "min": 0.05,
+   "max": 1.0
+  },
+  "help": "Drag on the mesh in the Scene view. Shift erases, Ctrl paints Less Detail, Esc stops. Alt still orbits.",
+  "defaults": {
+   "mode": "MoreDetail",
+   "size": 3.0,
+   "strength": 0.5
+  },
+  "range": 3.0
+ },
  "pending": [
   "CombineParts",
   "HiddenPartsFewer",
@@ -15,10 +54,7 @@
   "LodRemesh",
   "LodAutoQuads",
   "LodQuads",
-  "LodSettingsVersion",
-  "PaintMode",
-  "BrushSizePercent",
-  "BrushStrength"
+  "LodSettingsVersion"
  ],
  "generatedFrom": "upstream/Editor/NativeRemesherWindow*.cs (see upstream.lock)",
  "modelTypes": [

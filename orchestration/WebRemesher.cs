@@ -19,6 +19,7 @@ namespace NativeRemesher.Web
         public int[] faceMaterials;   // per face, or null
         public int quadCount, triangleCount, ngonCount;
         public long totalMs, decimateMs, topologyMs, orientationMs, positionMs, extractionMs;
+        internal QuadExtractionResult extraction;   // kept for the writers that want more than the flat arrays (FbxWriter: face UVs, normals)
         public string hash;           // FNV-1a over output bit patterns, for equality checks across hosts
     }
 
@@ -87,12 +88,30 @@ namespace NativeRemesher.Web
             return settings;
         }
 
+        /// <summary>
+        /// NativeRemesherWindow.SaveFbx (lines 725-746): written from the FACE LIST (quads stay quads), with the shading normals and per-corner UVs.
+        /// FbxWriter is upstream Runtime code compiled unchanged; it takes a path, so the bytes go through a temp file (the browser's in-memory FS).
+        /// </summary>
+        public static byte[] ToFbx(WebResult r, string name)
+        {
+            var ex = r.extraction;
+            var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "nr_" + Guid.NewGuid().ToString("N") + ".fbx");
+            try
+            {
+                FbxWriter.Write(path, ex.positions, ex.faces, ex.shadingNormals ?? ex.normals, string.IsNullOrEmpty(name) ? "mesh" : name,
+                    FbxWriter.defaultUnitScale, ex.faceUvs);
+                return System.IO.File.ReadAllBytes(path);
+            }
+            finally { try { System.IO.File.Delete(path); } catch { } }
+        }
+
         static WebResult ToResult(RemeshResult solved)
         {
             // A turned (revolved) result has topology == null: read ONLY from extraction.
             var ex = solved.extraction;
             var r = new WebResult
             {
+                extraction = ex,
                 quadCount = ex.quadCount, triangleCount = ex.triangleCount, ngonCount = ex.ngonCount,
                 totalMs = solved.totalMs, decimateMs = solved.decimateMs, topologyMs = solved.topologyMs,
                 orientationMs = solved.orientationMs, positionMs = solved.positionMs, extractionMs = solved.extractionMs,

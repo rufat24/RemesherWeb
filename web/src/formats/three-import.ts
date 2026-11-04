@@ -42,7 +42,28 @@ export async function parseWithThree(ext: string, data: ArrayBuffer): Promise<So
     }
     case 'stl': return sceneToSource(new THREE.Mesh(new STLLoader().parse(data)));
     case 'ply': return sceneToSource(new THREE.Mesh(new PLYLoader().parse(data)));
-    case 'fbx': return sceneToSource(new FBXLoader().parse(data, ''));
+    case 'fbx': return sceneToSource(parseFbx(data));
     default: throw new Error('No three.js loader for .' + ext);
   }
+}
+
+/**
+ * Two three.js FBXLoader limits that our own FbxWriter output (upstream Runtime code, kept byte-for-byte as Unity writes it) runs into. The file is
+ * valid ASCII FBX; the exported bytes are NOT changed, only what is handed to three:
+ *  1. three joins a continued array line only if it starts in column 0. FbxWriter indents continuation lines, so three silently dropped every vertex and
+ *     polygon after the first 256 (a 5,162-quad mesh came back as 64 quads). Continuation lines (indented, starting with a digit, '-' or ',') are de-indented.
+ *  2. three decides "is this ASCII?" by probing bytes at triangular offsets for the letters of the binary header; our header hits one ('i' at probe 13) and
+ *     is rejected as "Unknown format". ASCII FBX allows leading comment lines, which move the probes, so on that one error the text is retried behind comments.
+ */
+export function parseFbx(data: ArrayBuffer): THREE.Group {
+  const loader = new FBXLoader();
+  const head = new TextDecoder().decode(new Uint8Array(data, 0, Math.min(18, data.byteLength)));
+  if (head.startsWith('Kaydara FBX')) return loader.parse(data, '');             // binary FBX: three's own path
+  const text = new TextDecoder().decode(data).replace(/(\r?\n)[ \t]+(?=[-,\d])/g, '$1');
+  const encode = (t: string) => new TextEncoder().encode(t).buffer as ArrayBuffer;
+  let first: unknown;
+  for (const pad of ['', '; \n', ';\n;\n', '; x\n;\n;\n', ';\n;\n;\n;\n;\n']) {
+    try { return loader.parse(encode(pad + text), ''); } catch (e) { first ??= e; if (!/Unknown format/.test(String((e as Error).message))) throw e; }
+  }
+  throw first;
 }

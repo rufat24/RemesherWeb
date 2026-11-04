@@ -50,6 +50,11 @@ namespace NativeRemesher.Cli
                 Console.WriteLine(Summary(r));
                 return 0;
             }
+            if (a.Length >= 3 && a[0] == "fbx")      // cli fbx in.obj out.fbx [optionsJson]
+            {
+                var r = Run(a[1], a.Length > 3 ? a[3] : null);
+                System.IO.File.WriteAllBytes(a[2], WebRemesher.ToFbx(r, "remeshed")); Console.WriteLine(Summary(r)); return 0;
+            }
             if (a.Length >= 4 && a[0] == "aba")
             {
                 WebRemesher.DisableStaticsRestore = Environment.GetEnvironmentVariable("ABA_NO_RESTORE") == "1";

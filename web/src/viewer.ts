@@ -5,6 +5,9 @@ import { triangulate } from './formats/mesh';
 
 /** Shows the source (grey, translucent) and the result (solid, with the QUAD edges drawn, not the triangulation). Takes file-space meshes. */
 export class Viewer {
+  readonly raycaster = new THREE.Raycaster();
+  get dom() { return this.renderer.domElement; }
+  set navigation(on: boolean) { this.controls.enabled = on; }
   private renderer: THREE.WebGLRenderer; private scene = new THREE.Scene(); private camera: THREE.PerspectiveCamera; private controls: OrbitControls;
   private source: THREE.Object3D | null = null; private result: THREE.Object3D | null = null;
   constructor(private host: HTMLElement) {
@@ -23,7 +26,8 @@ export class Viewer {
   setSource(m: SourceMesh, showResultInstead = false) {
     this.clear(this.source);
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(m.positions, 3)); g.setIndex(new THREE.BufferAttribute(Uint32Array.from(m.triangles), 1)); g.computeVertexNormals();
-    const mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0x9aa4ad, roughness: 0.8, transparent: true, opacity: 0.55, side: THREE.DoubleSide }));
+    g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(m.positions.length).fill(0.62), 3));
+    const mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, transparent: true, opacity: 0.55, side: THREE.DoubleSide }));
     this.source = mesh; mesh.visible = !showResultInstead; this.scene.add(mesh); this.frame(g);
   }
   setResult(q: QuadMesh) {
@@ -37,6 +41,17 @@ export class Viewer {
     const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.BufferAttribute(lp, 3));
     grp.add(solid, new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28 })));
     this.result = grp; this.scene.add(grp); if (this.source) this.source.visible = false;
+  }
+  /** First hit of the pointer ray on the (visible) source: file-space point, or null. */
+  pickSource(ev: PointerEvent): THREE.Vector3 | null {
+    if (!this.source) return null;
+    const r = this.renderer.domElement.getBoundingClientRect();
+    this.raycaster.setFromCamera(new THREE.Vector2(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1), this.camera);
+    const hit = this.raycaster.intersectObject(this.source, false)[0]; return hit ? hit.point.clone() : null;
+  }
+  setSourceColors(c: Float32Array) {
+    const g = (this.source as THREE.Mesh | null)?.geometry; const a = g?.getAttribute('color') as THREE.BufferAttribute | undefined;
+    if (a) { (a.array as Float32Array).set(c); a.needsUpdate = true; }
   }
   showSource(v: boolean) { if (this.source) this.source.visible = v; }
   showResult(v: boolean) { if (this.result) this.result.visible = v; }

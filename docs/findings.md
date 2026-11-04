@@ -50,3 +50,19 @@ vertices per triangle (what a seam-split exporter writes) and binary PLY: all fi
 (`web/e2e/run-formats.sh`). STL and the split GLB give the very same result hash as the OBJ, because the core welds by position; the indexed GLB and PLY keep
 the file's vertex numbering and give another hash with the same face count (vertex order is an input to a chaotic pipeline).
 Not yet exercised: FBX import (three's FBXLoader; needs a fixture), UVs and materials through GLB/FBX, textures.
+
+## 9. FBX: export is upstream's `FbxWriter` unchanged; three.js can only read it after normalising
+
+`FbxWriter` (Runtime, compiled unchanged) is exposed as `WebRemesher.ToFbx` and `ResultFbx` and comes back with every job. The window's `SaveFbx` does the same
+(face list, shading normals, per-corner UVs; quads stay quads). It writes ASCII FBX 7.4 with X negated and winding reversed (documented in its header).
+Reading that file back through three.js's `FBXLoader` (the importer of this web app) hit three limits, none of them a defect in the file:
+
+1. continuation lines of long arrays are indented by the writer; three only joins lines that start in column 0, so it **silently dropped everything after the
+   first 256 vertices/indices** (5,162 quads came back as 64);
+2. three's ASCII sniffing probes the header at triangular offsets for letters of the binary header; the writer's header trips it ("Unknown format");
+3. three triangulates all polygons with earcut: near-degenerate quads lose a triangle (10,315 of 10,324 here).
+
+`parseFbx` in `web/src/formats/three-import.ts` handles 1 and 2 on import only (the exported bytes are unchanged). 3 is a limit of using three for FBX import:
+quads arrive as triangle pairs (consecutive, which is what the core pairs back), but a precise FBX reader (ufbx, plan section 5) remains the better importer.
+Other readers (Blender, Maya, Unity) were **not** run here; Unity is the format's origin.
+`web/e2e/fbx-roundtrip.cjs` exports FBX from the UI, loads it back into the UI and checks >= 99.5% of the expected triangles.

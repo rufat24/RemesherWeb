@@ -15,6 +15,7 @@ export interface QuadMesh {
   uvs?: Float32Array;
   faceMaterials?: Int32Array;
   materialNames?: string[];
+  fbx?: Uint8Array;                   // FBX bytes written by the core's own FbxWriter (upstream code), when the job produced them
 }
 
 export function faceCount(m: QuadMesh): number { return m.faceSizes.length; }
