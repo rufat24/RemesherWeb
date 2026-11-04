@@ -1,0 +1,37 @@
+name: ci
+on: { push: { branches: [main, 'claude/**'] }, pull_request: {}, workflow_dispatch: {} }
+env:
+  UPSTREAM_TOKEN: ${{ secrets.UPSTREAM_TOKEN }}   # read access to the Unity repo named in upstream.lock (needed while it is private)
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { global-json-file: global.json }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
+      - name: Rebuild upstream/ from upstream.lock (tree hash must reproduce)
+        run: tools/sync-upstream.sh --from-lock
+      - name: Drift, statics and web checks
+        run: tools/check-all.sh
+  upstream-tests:           # the Unity project's own 251 tests against our shim; ~6 min
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { global-json-file: global.json }
+      - run: tools/sync-upstream.sh --from-lock
+      - run: dotnet test tests -c Release --nologo
+  browser:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { global-json-file: global.json }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: dotnet workload install wasm-tools
+      - run: tools/sync-upstream.sh --from-lock
+      - run: scripts/build-wasm.sh
+      - run: cd web && npm ci && npx vite build && npx playwright install --with-deps chromium && npm i --no-save playwright && node e2e/e2e.cjs "$PWD/dist" ../.github/fixtures/cube.obj

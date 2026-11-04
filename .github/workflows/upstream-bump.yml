@@ -1,0 +1,38 @@
+name: upstream-bump
+# Nightly: if the Unity repo has moved past upstream.lock, re-sync, run every drift check, and open a PR either way.
+# A PASSING bump is a mechanical PR (review and merge). A FAILING bump is the point of this workflow: the PR body lists the DRIFT lines
+# (new/changed window fields, changed labels, shim gaps), i.e. exactly what the web version has to follow.
+on: { schedule: [{ cron: '17 3 * * *' }], workflow_dispatch: {} }
+permissions: { contents: write, pull-requests: write }
+jobs:
+  bump:
+    runs-on: ubuntu-24.04
+    env: { UPSTREAM_TOKEN: '${{ secrets.UPSTREAM_TOKEN }}', GH_TOKEN: '${{ github.token }}' }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { global-json-file: global.json }
+      - name: Find the new upstream commit
+        id: up
+        run: |
+          . upstream.lock
+          NEW=$(git ls-remote "https://x-access-token:${UPSTREAM_TOKEN}@${repo#https://}" "refs/heads/${ref}" | cut -f1)
+          echo "old=$sha" >> "$GITHUB_OUTPUT"; echo "new=$NEW" >> "$GITHUB_OUTPUT"
+          [ "$NEW" != "$sha" ] && echo "changed=1" >> "$GITHUB_OUTPUT" || true
+      - name: Sync to it and run the checks
+        if: steps.up.outputs.changed == '1'
+        id: chk
+        run: |
+          tools/sync-upstream.sh --sha "${{ steps.up.outputs.new }}"
+          set +e; tools/check-all.sh > check.log 2>&1; echo "rc=$?" >> "$GITHUB_OUTPUT"; set -e
+          grep -E '^(DRIFT|error|FAIL)' check.log | head -60 > drift.txt || true
+      - name: Open the PR
+        if: steps.up.outputs.changed == '1'
+        run: |
+          B="bump/upstream-${{ steps.up.outputs.new }}"
+          git config user.name "upstream-bump"; git config user.email "bot@users.noreply.github.com"
+          git checkout -b "$B"; git add upstream.lock census web/src/manifest.json 2>/dev/null || true; git commit -m "Bump upstream to ${{ steps.up.outputs.new }}" || true
+          git push -u origin "$B"
+          STATE=$([ "${{ steps.chk.outputs.rc }}" = 0 ] && echo "checks PASS: mechanical bump" || echo "checks FAIL: the web version must follow these changes")
+          { echo "Upstream ${{ steps.up.outputs.old }} -> ${{ steps.up.outputs.new }}: $STATE"; echo; echo '```'; cat drift.txt; echo '```'; } > body.md
+          gh pr create --title "Bump upstream (${STATE%%:*})" --body-file body.md --base main

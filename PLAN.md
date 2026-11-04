@@ -14,22 +14,22 @@ Conventions in this document:
 
 ---
 
-## Status (updated after M0, M0b, G0)
+## Status (updated after M1, M2 drift machinery, web app v0)
 
 | Milestone | State | Evidence |
 |---|---|---|
-| M0.1 toolchain | **Done** | `docs/toolchain.md` (.NET 10.0.114 + wasm-tools, both install here) |
-| M0.2 snapshot | **Done** | `tools/sync-upstream.sh`, `verify-upstream.sh`, `upstream.lock` (8766ead). `upstream/` is **untracked** until decision D4 (public repo, license) |
-| M0.3 shim | **Done** | `shim/`: core, bench and 251 upstream tests compile **unchanged** |
-| M0.4 bench | **Done** | upstream `BenchmarkRunner` runs unchanged via `bench/`; found that it throws on turned shapes (`docs/findings.md`) |
-| M0c experiments | **Done** | deterministic across processes and thread counts; chaotic at the last bit vs Unity (`docs/measurements.md`); **249/251 upstream tests pass** |
-| M0b WASM spike | **Done** | core runs in .NET WASM in Node **and a Chromium Web Worker**, bit-identical to CoreCLR |
-| **G0** | **Decided: browser-only is viable** | AOT is 1.1-1.8x single-thread CoreCLR after a profiled fix (one assembly + inlining; first measurement was 7x); 320k-tri case 46 s; threaded AOT does not build but is not needed |
+| M0 toolchain, snapshot, shim, bench | **Done** | `docs/toolchain.md`, `upstream.lock` (8766ead), `shim/`; core, bench and 251 upstream tests compile unchanged; 249 pass |
+| M0c experiments | **Done** | deterministic across processes/threads; chaotic at the last bit vs Unity (`docs/measurements.md`) |
+| M0b / G0 | **Done: browser-only is viable** | AOT 1.1-1.8x CoreCLR after one-assembly + inlining; 320k-tri case 46 s |
+| **M1 product path** | **Done** | `orchestration/WebRemesher.cs` ports the window's `PrepareRun` + solve; `[JSExport]` surface `wasm/Host.cs`; Worker protocol `wasm/worker/remesh-worker.mjs` (one fresh worker per job, cancel = terminate, progress at 10 Hz); CLI twin `cli remesh/aba/leak`. Browser vs CoreCLR: same polygons in 6/6, bit-identical in 4/6, rest within 0.1 quad edge (`docs/findings.md` #5, `tools/compare_obj.py`). Statics isolation tested with a negative control |
+| **M2 drift machinery (part)** | **Done: field census, generated UI manifest, mutation tests** | `tools/census_window_fields.py`, `tools/gen_manifest.py`, `tools/test-drift.sh`, `tools/check-all.sh`. **Still to do:** Editor-member Roslyn fingerprints, statics census of Runtime, shim coverage report |
+| **M2 web app v0** | **Done** | `web/`: manifest-driven options, import OBJ/GLB/GLTF/STL/PLY/FBX, export OBJ/PLY/OFF/STL (quads kept), viewer, e2e through the real UI in Chromium |
+| **M4 CI** | **Written, not yet run on GitHub** | `.github/workflows/ci.yml` (checks, upstream tests, browser e2e), `upstream-bump.yml` (nightly bump PR listing DRIFT). Needs the `UPSTREAM_TOKEN` secret while the Unity repo is private |
+| M3 features | **Not started** | pending list = `census/window-fields-pending.json`: parts, LOD chains, texture/normal bake, density paint, hard-surface extras already done via options, FBX export |
+| M5 formats | **Partly** | see above; missing: FBX/GLB/USD export, STEP, assimpjs catch-all, material/texture round trip |
 
-**Parity policy decided (M0c):** regress against the web-native baseline `baselines/coreclr-net10-8766ead-procedural.csv` (exactly reproducible; WASM equals it bit for bit
-on the cases tried). The Unity `baseline.csv` cannot be a 2% gate (E3c/E4); Unity goldens are judged per column over bands (needs decision D7).
-
-**Next:** M1 (browser host API and Worker protocol). The server host is optional (D3), not planned.
+**Parity policy decided (M0c, refined at M1):** same host + build = exact hash regression against `baselines/`; across hosts = same polygons and vertices within
+a fraction of a quad edge (libm differs, `Math.Sin` etc. are called directly upstream). Unity goldens are judged per column over bands (needs decision D7).
 
 ---
 

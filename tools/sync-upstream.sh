@@ -20,16 +20,21 @@ while [ $# -gt 0 ]; do
     *) echo "unknown arg $1" >&2; exit 2;;
   esac
 done
+# --sha alone (the nightly bump) takes the repo from upstream.lock
+if [ -z "$SRC" ] && [ -z "$REPO" ] && [ -f "$ROOT/upstream.lock" ]; then REPO="$(grep '^repo=' "$ROOT/upstream.lock" | cut -d= -f2-)"; fi
+# A private upstream: UPSTREAM_TOKEN is used for the fetch only; it never reaches upstream.lock or the log.
+FETCH_URL="$REPO"
+if [ -n "${UPSTREAM_TOKEN:-}" ] && [[ "$REPO" == https://github.com/* ]]; then FETCH_URL="https://x-access-token:${UPSTREAM_TOKEN}@${REPO#https://}"; fi
 TMP=""
 if [ -z "$SRC" ]; then
   [ -n "$REPO" ] || { echo "need --from-path or --repo" >&2; exit 2; }
   TMP="$(mktemp -d)"; trap '[ -n "$TMP" ] && rm -rf "$TMP"' EXIT
   if [ -n "$WANT_SHA" ]; then
-    mkdir "$TMP/src" && git -C "$TMP/src" init -q && git -C "$TMP/src" remote add origin "$REPO"
+    mkdir "$TMP/src" && git -C "$TMP/src" init -q && git -C "$TMP/src" remote add origin "$FETCH_URL"
     GIT_LFS_SKIP_SMUDGE=1 git -C "$TMP/src" fetch -q --depth 1 origin "$WANT_SHA"
     git -C "$TMP/src" checkout -q FETCH_HEAD
   else
-    GIT_LFS_SKIP_SMUDGE=1 git clone -q --depth 1 --branch "$REF" "$REPO" "$TMP/src"
+    GIT_LFS_SKIP_SMUDGE=1 git clone -q --depth 1 --branch "$REF" "$FETCH_URL" "$TMP/src"
   fi
   SRC="$TMP/src"
 else
@@ -38,7 +43,7 @@ fi
 NR="$SRC/Assets/NativeRemesher"
 [ -d "$NR/Runtime" ] || { echo "no Assets/NativeRemesher/Runtime in $SRC" >&2; exit 1; }
 SHA="$(git -C "$SRC" rev-parse HEAD)"
-URL="${REPO:-$(git -C "$SRC" remote get-url origin 2>/dev/null || echo "$SRC")}"
+URL="${REPO:-$(git -C "$SRC" remote get-url origin 2>/dev/null | sed -E 's#//[^@/]*@#//#' || echo "$SRC")}"
 
 DST="$ROOT/upstream"
 rm -rf "$DST"; mkdir -p "$DST"
