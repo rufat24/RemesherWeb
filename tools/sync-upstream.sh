@@ -2,15 +2,21 @@
 # Copy the NativeRemesher sources from the Unity project clone into ./upstream, read-only snapshot.
 #   tools/sync-upstream.sh --from-path /path/to/clone
 #   tools/sync-upstream.sh --repo https://github.com/OWNER/REPO --ref main
+#   tools/sync-upstream.sh --repo URL --sha <commit>      (exact commit; what CI uses)
+#   tools/sync-upstream.sh --from-lock                    (repo and sha from upstream.lock: rebuilds the pinned snapshot)
 # Writes upstream.lock (repo, ref, sha, tree hash). The clone itself is never modified.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SRC=""; REPO=""; REF="main"
+SRC=""; REPO=""; REF="main"; WANT_SHA=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --from-path) SRC="$2"; shift 2;;
     --repo) REPO="$2"; shift 2;;
     --ref) REF="$2"; shift 2;;
+    --sha) WANT_SHA="$2"; shift 2;;
+    --from-lock)
+      L="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/upstream.lock"
+      REPO="$(grep '^repo=' "$L" | cut -d= -f2-)"; WANT_SHA="$(grep '^sha=' "$L" | cut -d= -f2)"; shift;;
     *) echo "unknown arg $1" >&2; exit 2;;
   esac
 done
@@ -18,7 +24,13 @@ TMP=""
 if [ -z "$SRC" ]; then
   [ -n "$REPO" ] || { echo "need --from-path or --repo" >&2; exit 2; }
   TMP="$(mktemp -d)"; trap '[ -n "$TMP" ] && rm -rf "$TMP"' EXIT
-  GIT_LFS_SKIP_SMUDGE=1 git clone -q --depth 1 --branch "$REF" "$REPO" "$TMP/src"
+  if [ -n "$WANT_SHA" ]; then
+    mkdir "$TMP/src" && git -C "$TMP/src" init -q && git -C "$TMP/src" remote add origin "$REPO"
+    GIT_LFS_SKIP_SMUDGE=1 git -C "$TMP/src" fetch -q --depth 1 origin "$WANT_SHA"
+    git -C "$TMP/src" checkout -q FETCH_HEAD
+  else
+    GIT_LFS_SKIP_SMUDGE=1 git clone -q --depth 1 --branch "$REF" "$REPO" "$TMP/src"
+  fi
   SRC="$TMP/src"
 else
   [ -z "$REPO" ] || { echo "--from-path and --repo are exclusive" >&2; exit 2; }
