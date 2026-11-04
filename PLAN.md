@@ -14,6 +14,25 @@ Conventions in this document:
 
 ---
 
+## Status (updated after M0, M0b, G0)
+
+| Milestone | State | Evidence |
+|---|---|---|
+| M0.1 toolchain | **Done** | `docs/toolchain.md` (.NET 10.0.114 + wasm-tools, both install here) |
+| M0.2 snapshot | **Done** | `tools/sync-upstream.sh`, `verify-upstream.sh`, `upstream.lock` (8766ead). `upstream/` is **untracked** until decision D4 (public repo, license) |
+| M0.3 shim | **Done** | `shim/`: core, bench and 251 upstream tests compile **unchanged** |
+| M0.4 bench | **Done** | upstream `BenchmarkRunner` runs unchanged via `bench/`; found that it throws on turned shapes (`docs/findings.md`) |
+| M0c experiments | **Done** | deterministic across processes and thread counts; chaotic at the last bit vs Unity (`docs/measurements.md`); **249/251 upstream tests pass** |
+| M0b WASM spike | **Done** | core runs in .NET WASM in Node **and a Chromium Web Worker**, bit-identical to CoreCLR |
+| **G0** | **Decided: hybrid** | AOT is ~7x slower than single-thread CoreCLR (limit was 5x); threaded AOT does not build |
+
+**Parity policy decided (M0c):** regress against the web-native baseline `baselines/coreclr-net10-8766ead-procedural.csv` (exactly reproducible; WASM equals it bit for bit
+on the cases tried). The Unity `baseline.csv` cannot be a 2% gate (E3c/E4); Unity goldens are judged per column over bands (needs decision D7).
+
+**Next:** M1 (browser host API and Worker protocol, plus the server host that G0 made a planned component).
+
+---
+
 ## 0. Summary
 
 1. **Architecture.** The C# core is compiled **unchanged, from source**, against a small `UnityEngine` shim we
